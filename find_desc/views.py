@@ -24,10 +24,6 @@ def find_as_str(request):
         find_re=[request.GET.get('string')] if request.GET.get('type') == 'regex' else [],
         stop_on=request.GET.get('stop_on')
     )
-    print({
-        'data': result,
-        'status': 'next' if result else 'end'
-    })
     return JsonResponse({
         'data': result,
         'status': 'next' if result else 'end'

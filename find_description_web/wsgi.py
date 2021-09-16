@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 """
 WSGI config for find_description_web project.
 

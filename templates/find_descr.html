@@ -14,7 +14,7 @@
             <input class="atuin-btn" type="button" value="как регулярное выражение" onclick="start_find('regex')">
         </div>
     </form>
-    <div id="content-point"></div>
+    <div id="content-point" style="text-align: center; margin: 20px"></div>
 
 {% endblock %}
 
@@ -42,12 +42,20 @@ function find_next (find_type, stop_on, add_after) {
                     + response.data.SavedTime + '</td></tr>'
                 )
                 find_next(find_type, response.data.Device, '#'+String(response.data.Device))
+            } else {
+                document.getElementById('content-point').innerHTML = 'Поиск завершен'
+                document.getElementById('load_circle').remove()
             }
         }
     })
 }
 
 function start_find (find_type) {
+    $('#content-point').before(`<div id="load_circle" class="cssload-container" style="margin: 50px; padding-bottom: 20px">
+                                <div class="cssload-whirlpool"></div>
+                            </div>`)
+
+    document.getElementById('content-point').innerHTML = 'Идет поиск, пожалуйста, подождите...'
     $.ajax({
         data: {
             'string': document.getElementById('find_str').value,
@@ -56,7 +64,7 @@ function start_find (find_type) {
         type: 'get',
         url: '/ajax/find',
         success: function (response) {
-            if (response.status === 'next') {
+            if (response.data) {
                 $('#content-point').after(`
                     <table id='data_table' style="margin: 20px;">
                     <th>Узел сети</th><th>Интерфейс</th><th>Описание</th><th>Время сохранения</th>
@@ -67,8 +75,17 @@ function start_find (find_type) {
                     + response.data.Description + '</td><td style="color: green">'
                     + response.data.SavedTime + '</td></tr></table>'
                 )
-                find_next(find_type, response.data.Device, '#r1')
-            }
+                if (response.status === 'next'){
+                    find_next(find_type, response.data.Device, '#r1')
+                } else {
+                    document.getElementById('content-point').innerHTML = 'Поиск завершен'
+                    document.getElementById('load_circle').remove()
+                }
+
+            } else {
+                document.getElementById('content-point').innerHTML = 'Ничего не найдено'
+                document.getElementById('load_circle').remove()
+                }
         },
         error: function (response) {
             console.log(response)
