@@ -34,14 +34,14 @@ function find_next (find_type, stop_on, add_after) {
         success: function (response) {
             if (response.status === 'next') {
                 $(add_after).after(
-                    '<tr id="'+response.data.Device
+                    '<tr id="'+response.data.Device.replace(' ', '_')
                     +'"><td style="color: #337AB7">'
                     + response.data.Device + '</td><td>'
                     + response.data.Interface + '</td><td>'
                     + response.data.Description + '</td><td style="color: green">'
                     + response.data.SavedTime + '</td></tr>'
                 )
-                find_next(find_type, response.data.Device, '#'+String(response.data.Device))
+                find_next(find_type, response.data.Device, '#'+response.data.Device.replace(' ', '_'))
             } else {
                 document.getElementById('content-point').innerHTML = 'Поиск завершен'
                 document.getElementById('load_circle').remove()
