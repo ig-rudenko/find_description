@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block header %}
+    Поиск по описанию портов
+{% endblock %}
+{% block content %}
+    <form method="post">
+        {% csrf_token %}
+        <div class="center_">
+            <label style="text-align: center">
+                Необходимо найти:
+                <input id="find_str" type="text" required style="width: 300px; margin: 10px" content="asd">
+            </label>
+            <input class="atuin-btn" type="button" value="строгий поиск" onclick="start_find('string')">
+            <input class="atuin-btn" type="button" value="как регулярное выражение" onclick="start_find('regex')">
+        </div>
+    </form>
+    <div id="content-point"></div>
+
+{% endblock %}
+
+{% block javascript %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+
+function find_next (find_type, stop_on, add_after) {
+    $.ajax({
+        data: {
+            'string': document.getElementById('find_str').value,
+            'type': find_type,
+            'stop_on': stop_on
+        },
+        type: 'get',
+        url: '/ajax/find',
+        success: function (response) {
+            if (response.status === 'next') {
+                $(add_after).after(
+                    '<tr id="'+response.data.Device
+                    +'"><td style="color: #337AB7">'
+                    + response.data.Device + '</td><td>'
+                    + response.data.Interface + '</td><td>'
+                    + response.data.Description + '</td><td style="color: green">'
+                    + response.data.SavedTime + '</td></tr>'
+                )
+                find_next(find_type, response.data.Device, '#'+String(response.data.Device))
+            }
+        }
+    })
+}
+
+function start_find (find_type) {
+    $.ajax({
+        data: {
+            'string': document.getElementById('find_str').value,
+            'type': find_type
+        },
+        type: 'get',
+        url: '/ajax/find',
+        success: function (response) {
+            if (response.status === 'next') {
+                $('#content-point').after(`
+                    <table id='data_table' style="margin: 20px;">
+                    <th>Узел сети</th><th>Интерфейс</th><th>Описание</th><th>Время сохранения</th>
+                    <tr id='r1'>
+                    <td style="color: #337AB7">`
+                    + response.data.Device + '</td><td>'
+                    + response.data.Interface + '</td><td>'
+                    + response.data.Description + '</td><td style="color: green">'
+                    + response.data.SavedTime + '</td></tr></table>'
+                )
+                find_next(find_type, response.data.Device, '#r1')
+            }
+        },
+        error: function (response) {
+            console.log(response)
+        }
+    })
+}
+</script>
+{% endblock %}

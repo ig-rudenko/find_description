@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{% static "css/styles.css" %}" />
+    <title>
+        {% block title %}
+        Find Description
+        {% endblock %}
+    </title>
+</head>
+<body>
+    {% block body %}
+        <h1 class="center_" style="text-align: center; margin-bottom: 50px;">
+            {% block header %}{% endblock %}
+        </h1>
+        <div class="center_">
+            {% block content %}{% endblock %}
+        </div>
+        <div>
+            {% block footer %}{% endblock %}
+        </div>
+    {% endblock %}
+    {% block javascript %}{% endblock %}
+</body>
+</html>
