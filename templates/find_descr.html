@@ -77,8 +77,8 @@ function add_row(data, add_after){
         if (i === 0) tr_id = hashCode(data[0].Device)+'-last'
         console.log(add_after)
         $(add_after).after(
-            `<tr id="d${tr_id}"><td style="color: #337AB7"> <a target="_blank" href="http://10.100.0.50/zabbix/zabbix.php?action=host.view&filter_name=
-            ${data[i].Device}&filter_ip=&filter_dns=&filter_port=&filter_status=-1&filter_evaltype=0&filter_tags%5B0%5D%5Btag%5D=&filter_tags%5B0%5D%5Boperator%5D=0&filter_tags%5B0%5D%5Bvalue%5D=&filter_maintenance_status=1&filter_show_suppressed=0&filter_set=1">
+            `<tr id="d${tr_id}"><td style="color: #337AB7">
+<a target="_blank" href="{{ zabbix_url }}/zabbix.php?action=host.view&filter_name=${data[i].Device}&filter_ip=&filter_dns=&filter_port=&filter_status=-1&filter_evaltype=0&filter_tags%5B0%5D%5Btag%5D=&filter_tags%5B0%5D%5Boperator%5D=0&filter_tags%5B0%5D%5Bvalue%5D=&filter_maintenance_status=1&filter_show_suppressed=0&filter_set=1">
             ${data[i].Device}</a></td><td>
             ${data[i].Interface}</td><td>
             ${data[i].Description}</td><td style="color: green">

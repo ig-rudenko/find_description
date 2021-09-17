@@ -2,17 +2,28 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from find_desc.finder import find_description, get_stat
+from configparser import ConfigParser
+import sys
 
 
 @login_required(login_url='accounts/login/')
 def home(request):
+    cfg = ConfigParser()
+    zabbix_url = ''
+    try:
+        cfg.read(f'{sys.path[0]}/config')
+        zabbix_url = cfg.get('data', 'zabbixurl')
+    except Exception:
+        pass
+
     devs_count, intf_count = get_stat()
     return render(
         request,
         'find_descr.html',
         {
             "devs_count": devs_count,
-            'intf_count': intf_count or 'None'
+            'intf_count': intf_count or 'None',
+            'zabbix_url': zabbix_url
         }
     )
 
