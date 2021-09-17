@@ -14,12 +14,29 @@ def admin_status_color(admin_status: str) -> str:
         return f'\x1b[1;32m{admin_status}\x1b[0m'
 
 
+def get_stat():
+    cfg = ConfigParser()
+    cfg.read(f'{sys.path[0]}/config')
+    data_dir = cfg.get('data', 'path')
+    devs_count = None
+    intf_count = 0
+    try:
+        all_devices = os.listdir(data_dir)  # Все папки
+        devs_count = len(all_devices)
+        for device in all_devices:
+            if os.path.exists(f'{data_dir}/{device}/interfaces.yaml'):
+                intf_count += 1
+    except Exception:
+        pass
+    return devs_count, intf_count
+
+
 def find_description(find_str: list, find_re: list, stop_on: str):
     cfg = ConfigParser()
     cfg.read(f'{sys.path[0]}/config')
     data_dir = cfg.get('data', 'path')
 
-    result = {}
+    result = []
     finding_string = '|'.join(find_str).lower()
 
     re_string = '|'.join(find_re)
@@ -59,12 +76,17 @@ def find_description(find_str: list, find_re: list, stop_on: str):
                         else:
                             saved_date = ''
 
-                        return {
+                        result.append({
                                 'Device': device,
                                 'Interface': line['Interface'],
                                 'Description': line['Description'],
-                                'SavedTime': saved_date
-                            }
+                                'SavedTime': saved_date,
+                                'percent': f'{str(all_devices.index(device) / 100 * len(all_devices))[:5]}%'
+                            })
+
+                if result:
+                    return result  # Если на данном оборудовании были найдены совпадения, то
+                            # возвращаем их и прерываем дальнейший поиск
 
     except Exception:
         pass

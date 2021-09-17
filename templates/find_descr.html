@@ -3,18 +3,29 @@
     Поиск по описанию портов
 {% endblock %}
 {% block content %}
-    <form method="post">
-        {% csrf_token %}
-        <div class="center_">
+    <div style="text-align: left">
+        <p style="margin: 5px">Всего оборудования имеется: {{ devs_count }}</p>
+        <p style="margin: 5px">Из них интерфейсов собрано: {{ intf_count }}</p>
+    </div>
+    <div class="center_">
+        <div style="text-align: center">
             <label style="text-align: center">
                 Необходимо найти:
-                <input id="find_str" type="text" required style="width: 300px; margin: 10px" content="asd">
+                <input id="find_str" type="text" required style="width: 450px; margin: 10px; margin-right: 0" content="asd">
             </label>
             <input class="atuin-btn" type="button" value="строгий поиск" onclick="start_find('string')">
             <input class="atuin-btn" type="button" value="как регулярное выражение" onclick="start_find('regex')">
+            <input id="stop-btn" class="atuin-btn" type="button" value="остановить поиск" onclick="stop_search()"
+                   style="display: none; background: #e35f5f">
+            <div id="load_circle" class="cssload-container" style="margin: 30px; padding-bottom: 20px; display: none">
+                <div class="cssload-whirlpool"></div>
+            </div>
         </div>
-    </form>
-    <div id="content-point" style="text-align: center; margin: 20px"></div>
+    </div>
+    <div>
+        <div id="content-point" style="text-align: center; margin: 20px"></div>
+    </div>
+
 
 {% endblock %}
 
@@ -22,75 +33,103 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script>
 
-function find_next (find_type, stop_on, add_after) {
+SEARCH = true
+
+function stop_search() {
+    SEARCH = false
+    document.getElementById('stop-btn').style.display = 'none'
+    document.getElementById('load_circle').style.display = 'none'
+    document.getElementById('content-point').innerHTML = 'Поиск завершен'
+}
+
+
+function start_search(search_string, search_type) {
+
+    SEARCH = true
+    if (search_type === 'string') {
+        var label = 'СТРОКИ: '
+    } else {
+        label = 'ПО РЕГУЛЯРНОМУ ВЫРАЖЕНИЮ: '
+    }
+    document.getElementById('load_circle').style.display = 'block'
+    document.getElementById('stop-btn').style.display = ''
+    document.getElementById('content-point').innerHTML = 'Идет поиск, пожалуйста, подождите...'
+    $('#content-point').after(`
+    <div id='data_div`+search_string+search_type+`' style="text-align: center; margin: 20px">
+        <span style="text-align: center">ПОИСК `+label+`</span><span style="color: #006b1b">`+search_string+`</span>
+        <span id=percent-`+search_string+search_type+`></span>
+        <table id='data_table`+search_string+search_type+`' style="margin: auto; display: none">
+            <th>Узел сети</th><th>Интерфейс</th><th>Описание</th><th>Время сохранения</th>
+            <tr id="end-table-head`+search_string+search_type+`"></tr>
+        </table>
+    </div>`)
+}
+
+
+function add_row(data, add_after){
+    for (var i = 0; i < data.length; i++) {
+        $(add_after).after(
+            '<tr id="' + data[i].Device.replace(' ', '_')
+            + '"><td style="color: #337AB7"> <a target="_blank" href="http://10.100.0.50/zabbix/zabbix.php?action=host.view&filter_name='
+            + data[i].Device + `&filter_ip=&filter_dns=&filter_port=&filter_status=-1&filter_evaltype=0&filter_tags%5B0%5D%5Btag%5D=&filter_tags%5B0%5D%5Boperator%5D=0&filter_tags%5B0%5D%5Bvalue%5D=&filter_maintenance_status=1&filter_show_suppressed=0&filter_set=1">`
+            + data[i].Device + '</a></td><td>'
+            + data[i].Interface + '</td><td>'
+            + data[i].Description + '</td><td style="color: green">'
+            + data[i].SavedTime + '</td></tr>'
+        )
+    }
+}
+
+
+function find_next (find_type, stop_on, add_after, find_str) {
     $.ajax({
         data: {
-            'string': document.getElementById('find_str').value,
+            'string': find_str,
             'type': find_type,
             'stop_on': stop_on
         },
         type: 'get',
         url: '/ajax/find',
         success: function (response) {
-            if (response.status === 'next') {
-                $(add_after).after(
-                    '<tr id="'+response.data.Device.replace(' ', '_')
-                    +'"><td style="color: #337AB7">'
-                    + response.data.Device + '</td><td>'
-                    + response.data.Interface + '</td><td>'
-                    + response.data.Description + '</td><td style="color: green">'
-                    + response.data.SavedTime + '</td></tr>'
-                )
-                find_next(find_type, response.data.Device, '#'+response.data.Device.replace(' ', '_'))
+            if (response.status === 'next' && SEARCH) {
+                add_row(response.data, add_after)
+                document.getElementById('percent-'+find_str+find_type).innerHTML = response.data[response.data.length-1].percent
+                find_next(find_type, response.data[0].Device, '#'+response.data[0].Device.replace(' ', '_'), find_str)
             } else {
-                document.getElementById('content-point').innerHTML = 'Поиск завершен'
-                document.getElementById('load_circle').remove()
+                document.getElementById('percent-'+find_str+find_type).innerHTML = ''
+                stop_search()
             }
         }
     })
 }
 
 function start_find (find_type) {
-    $('#content-point').before(`<div id="load_circle" class="cssload-container" style="margin: 50px; padding-bottom: 20px">
-                                <div class="cssload-whirlpool"></div>
-                            </div>`)
-
-    document.getElementById('content-point').innerHTML = 'Идет поиск, пожалуйста, подождите...'
+    let find_str = document.getElementById('find_str').value
+    if (!find_str){return}
+    start_search(find_str, find_type)
     $.ajax({
         data: {
-            'string': document.getElementById('find_str').value,
+            'string': find_str,
             'type': find_type
         },
         type: 'get',
         url: '/ajax/find',
         success: function (response) {
-            if (response.data) {
-                $('#content-point').after(`
-                    <table id='data_table' style="margin: 20px;">
-                    <th>Узел сети</th><th>Интерфейс</th><th>Описание</th><th>Время сохранения</th>
-                    <tr id='r1'>
-                    <td style="color: #337AB7">`
-                    + response.data.Device + '</td><td>'
-                    + response.data.Interface + '</td><td>'
-                    + response.data.Description + '</td><td style="color: green">'
-                    + response.data.SavedTime + '</td></tr></table>'
-                )
-                if (response.status === 'next'){
-                    find_next(find_type, response.data.Device, '#r1')
-                } else {
-                    document.getElementById('content-point').innerHTML = 'Поиск завершен'
-                    document.getElementById('load_circle').remove()
-                }
-
+            if (response.data.length && SEARCH) {
+                add_row(response.data, '#end-table-head'+find_str+find_type)
+                document.getElementById('data_table'+find_str+find_type).style.display = ''
+                find_next(find_type, response.data[0].Device, '#'+response.data[0].Device.replace(' ', '_'), find_str)
             } else {
+                stop_search()
                 document.getElementById('content-point').innerHTML = 'Ничего не найдено'
-                document.getElementById('load_circle').remove()
+                document.getElementById('data_div'+find_str+find_type).style.display = 'none'
                 }
         },
         error: function (response) {
             console.log(response)
         }
-    })
+    }
+    )
 }
 </script>
 {% endblock %}
