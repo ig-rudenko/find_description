@@ -33,7 +33,10 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script>
 
-SEARCH = true
+var SEARCH = true
+
+
+hashCode = s => String(s.split('').reduce((a,b)=>{a=((a<<5)-a)+b.charCodeAt(0);return a&a},0))
 
 function stop_search() {
     SEARCH = false
@@ -44,7 +47,8 @@ function stop_search() {
 
 
 function start_search(search_string, search_type) {
-
+    let search_type_ = hashCode(search_type)
+    let search_string_ = hashCode(search_string)
     SEARCH = true
     if (search_type === 'string') {
         var label = 'СТРОКИ: '
@@ -55,27 +59,30 @@ function start_search(search_string, search_type) {
     document.getElementById('stop-btn').style.display = ''
     document.getElementById('content-point').innerHTML = 'Идет поиск, пожалуйста, подождите...'
     $('#content-point').after(`
-    <div id='data_div`+search_string+search_type+`' style="text-align: center; margin: 20px">
-        <span style="text-align: center">ПОИСК `+label+`</span><span style="color: #006b1b">`+search_string+`</span>
-        <span id=percent-`+search_string+search_type+`></span>
-        <table id='data_table`+search_string+search_type+`' style="margin: auto; display: none">
+    <div id='data_div${search_string_+search_type_}' style="text-align: center; margin: 20px">
+        <span style="text-align: center">ПОИСК ${label}</span><span style="color: #006b1b"> ${search_string}</span>
+        <span id=percent-${search_string_+search_type_}></span>
+        <table id='data_table${search_string_+search_type_}' style="margin: auto; display: none">
             <th>Узел сети</th><th>Интерфейс</th><th>Описание</th><th>Время сохранения</th>
-            <tr id="end-table-head`+search_string+search_type+`"></tr>
+            <tr id="end-table-head${search_string_+search_type_}"></tr>
         </table>
     </div>`)
 }
 
 
 function add_row(data, add_after){
+    add_after = '#'+add_after
     for (var i = 0; i < data.length; i++) {
+        var tr_id = hashCode(data[0].Device)
+        if (i === 0) tr_id = hashCode(data[0].Device)+'-last'
+        console.log(add_after)
         $(add_after).after(
-            '<tr id="' + data[i].Device.replace(' ', '_')
-            + '"><td style="color: #337AB7"> <a target="_blank" href="http://10.100.0.50/zabbix/zabbix.php?action=host.view&filter_name='
-            + data[i].Device + `&filter_ip=&filter_dns=&filter_port=&filter_status=-1&filter_evaltype=0&filter_tags%5B0%5D%5Btag%5D=&filter_tags%5B0%5D%5Boperator%5D=0&filter_tags%5B0%5D%5Bvalue%5D=&filter_maintenance_status=1&filter_show_suppressed=0&filter_set=1">`
-            + data[i].Device + '</a></td><td>'
-            + data[i].Interface + '</td><td>'
-            + data[i].Description + '</td><td style="color: green">'
-            + data[i].SavedTime + '</td></tr>'
+            `<tr id="d${tr_id}"><td style="color: #337AB7"> <a target="_blank" href="http://10.100.0.50/zabbix/zabbix.php?action=host.view&filter_name=
+            ${data[i].Device}&filter_ip=&filter_dns=&filter_port=&filter_status=-1&filter_evaltype=0&filter_tags%5B0%5D%5Btag%5D=&filter_tags%5B0%5D%5Boperator%5D=0&filter_tags%5B0%5D%5Bvalue%5D=&filter_maintenance_status=1&filter_show_suppressed=0&filter_set=1">
+            ${data[i].Device}</a></td><td>
+            ${data[i].Interface}</td><td>
+            ${data[i].Description}</td><td style="color: green">
+            ${data[i].SavedTime}</td></tr>`
         )
     }
 }
@@ -91,12 +98,24 @@ function find_next (find_type, stop_on, add_after, find_str) {
         type: 'get',
         url: '/ajax/find',
         success: function (response) {
+            console.log(response)
             if (response.status === 'next' && SEARCH) {
                 add_row(response.data, add_after)
-                document.getElementById('percent-'+find_str+find_type).innerHTML = response.data[response.data.length-1].percent
-                find_next(find_type, response.data[0].Device, '#'+response.data[0].Device.replace(' ', '_'), find_str)
+                document.getElementById('percent-'+hashCode(find_str)+hashCode(find_type)).innerHTML = response.data[0].percent
+
+                find_next(
+                    find_type,
+                    response.data[0].Device,
+                    'd'+hashCode(response.data[0].Device)+'-last',
+                    find_str
+                )
+
             } else {
-                document.getElementById('percent-'+find_str+find_type).innerHTML = ''
+                if (response.status === 'end'){
+                    document.getElementById('percent-'+hashCode(find_str)+hashCode(find_type)).innerHTML = '100%'
+                } else {
+                    document.getElementById('percent-'+hashCode(find_str)+hashCode(find_type)).innerHTML = ''
+                }
                 stop_search()
             }
         }
@@ -115,14 +134,24 @@ function start_find (find_type) {
         type: 'get',
         url: '/ajax/find',
         success: function (response) {
+            console.log(response)
             if (response.data.length && SEARCH) {
-                add_row(response.data, '#end-table-head'+find_str+find_type)
-                document.getElementById('data_table'+find_str+find_type).style.display = ''
-                find_next(find_type, response.data[0].Device, '#'+response.data[0].Device.replace(' ', '_'), find_str)
+
+                {# Добавляем первую строчку в таблицу #}
+                add_row(response.data, 'end-table-head'+hashCode(find_str)+hashCode(find_type))
+
+                document.getElementById('data_table'+hashCode(find_str)+hashCode(find_type)).style.display = ''
+
+                find_next(
+                    find_type,
+                    response.data[0].Device,
+                    'd'+hashCode(response.data[0].Device)+'-last',
+                    find_str
+                )
             } else {
                 stop_search()
                 document.getElementById('content-point').innerHTML = 'Ничего не найдено'
-                document.getElementById('data_div'+find_str+find_type).style.display = 'none'
+                document.getElementById('data_div'+hashCode(find_str)+hashCode(find_type)).style.display = 'none'
                 }
         },
         error: function (response) {

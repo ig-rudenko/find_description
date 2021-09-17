@@ -31,33 +31,31 @@ def get_stat():
     return devs_count, intf_count
 
 
-def find_description(find_str: list, find_re: list, stop_on: str):
+def find_description(finding_string: str, re_string: str, stop_on: str):
+    print(re_string)
     cfg = ConfigParser()
     cfg.read(f'{sys.path[0]}/config')
     data_dir = cfg.get('data', 'path')
 
     result = []
-    finding_string = '|'.join(find_str).lower()
-
-    re_string = '|'.join(find_re)
 
     try:
         all_devices = sorted(os.listdir(data_dir))  # Все папки
         # Создаем упорядоченный список папок, которые необходимо сканировать
         # начиная после последнего найденного устройства, если таковое было передано
         device_to_scan = all_devices[all_devices.index(stop_on) + 1 if stop_on else 0:]
-        print(device_to_scan)
 
         # Производим поочередный поиск
         for device in device_to_scan:
+            device = device.replace(' ', '\\ ').replace('|', '\|')
             if os.path.exists(f'{data_dir}/{device}/interfaces.yaml'):
                 with open(f'{data_dir}/{device}/interfaces.yaml', 'r') as intf_yaml:
                     interfaces = yaml.safe_load(intf_yaml)
                 for line in interfaces['data']:
-                    if (findall(finding_string, line['Description'].lower()) and find_str) or \
-                            (findall(re_string, line['Description']) and find_re):
+
+                    if (finding_string and finding_string.lower() in line['Description'].lower()) or \
+                            (re_string and len(findall(re_string, line['Description'])) != 0):
                         # Если нашли совпадение в строке
-                        # Возвращаем первое найденное
                         if interfaces.get('saved time') and \
                                 DateConverter(interfaces.get('saved time')).date == date.today():
                             saved_date = f'Сегодня в {interfaces["saved time"].split(",")[1].strip()}'
@@ -81,9 +79,8 @@ def find_description(find_str: list, find_re: list, stop_on: str):
                                 'Interface': line['Interface'],
                                 'Description': line['Description'],
                                 'SavedTime': saved_date,
-                                'percent': f'{str(all_devices.index(device) / 100 * len(all_devices))[:5]}%'
+                                'percent': f'{str(all_devices.index(device) * 100 / len(all_devices))[:5]}%'
                             })
-
                 if result:
                     return result  # Если на данном оборудовании были найдены совпадения, то
                             # возвращаем их и прерываем дальнейший поиск
