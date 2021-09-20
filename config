@@ -1,3 +1,5 @@
 [data]
-path=
-zabbixurl=
+# Полный путь до папки `data` проекта `Zabbix Devices Output`
+path=/full/path/zabbix-devices-output/data/
+
+zabbixurl=https://localhost/zabbix
