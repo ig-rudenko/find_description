@@ -139,9 +139,9 @@ def find_vlan(device: str, vlan_to_find: int, passed_devices: set, dict_enter: d
     dict_enter[device] = {}
 
     passed_devices.add(device)  # Добавляем узел в список уже пройденных устройств
-    if not os.path.exists(f'{data_dir}\\{device}\\vlans.yaml'):
+    if not os.path.exists(os.path.join(data_dir, device, 'vlans.yaml')):
         return
-    with open(f'{data_dir}\\{device}\\vlans.yaml') as file_yaml:
+    with open(os.path.join(data_dir, device, 'vlans.yaml')) as file_yaml:
         vlans_yaml = yaml.safe_load(file_yaml)
 
     interfaces = vlans_yaml['data']
