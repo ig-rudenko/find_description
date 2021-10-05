@@ -1,13 +1,13 @@
 version: '3.1'
 
 services:
-  django:
-    container_name: find_description
-    image: find_descr:0.6
+  find_descr_vlan:
+    container_name: find_descr_vlan
+    image: find_descr_vlan:0.7
     command: python manage.py runserver 0.0.0.0:8000
     ports:
       - "8000:8000"
     volumes:
       - ./db.sqlite3:/home/db.sqlite3
-      - /home/irudenko/zabbix_scripts/zabbix-devices-output/data/:/home/data
       - ./config:/home/config
+      - ./vlan_traceroute/name_format.yaml:/home/vlan_traceroute/name_format.yaml

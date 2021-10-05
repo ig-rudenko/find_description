@@ -21,6 +21,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
     path('', views.home),
+    path('vlan', views.vlan_traceroute),
+    path('vlan_map', views.get_vlan),
 
     # AJAX
     path('ajax/', include('ajax.urls'))

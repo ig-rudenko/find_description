@@ -1,4 +1,4 @@
-# Find Description
+# Find Description - VLAN traceroute
 
 ---
 
@@ -24,7 +24,7 @@
 
 Создаем образ docker
 
-    docker image build -t find_descr:0.6 .
+    docker image build -t find_descr_vlan:0.7 .
 
 Запускаем
 
@@ -38,3 +38,5 @@
 
 ![img.png](static/img/img.png)
 ![img.png](static/img/img1.png)
+![img.png](static/img/img2.png)
+![img.png](static/img/img3.png)

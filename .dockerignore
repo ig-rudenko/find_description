@@ -1,0 +1,11 @@
+*
+!ajax
+!find_desc
+!find_description_web
+!static
+!templates
+!vlan_traceroute
+!config
+!db.sqlite3
+!manage.py
+!requirements.txt

@@ -85,7 +85,7 @@ text:hover {
 /* КНОПКА INPUT*/
 
 .atuin-btn {
-    display: inline-flex;
+    /*display: inline-flex;*/
     width: 320px;
     /*margin: 0px;*/
     text-decoration: none;
@@ -128,51 +128,32 @@ text:hover {
 
 /* КОНЕЦ КНОПКИ */
 
-/* КНОПКА ДОБАВИТЬ */
 
-.atuin-btn2 {
-    display: inline-flex;
-    margin: 10px;
-    text-decoration: none;
-    position: relative;
-    font-size: 14px;
-    line-height: 10px;
-    padding: 12px 30px;
-    color: #FFF;
-    /*font-weight: bold;*/
-    text-transform: uppercase;
-    font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif, serif;
-    background: #337AB7;
+.first {
     cursor: pointer;
-    border: 2px solid #BFE2FF;
-}
-.atuin-btn2:hover,
-.atuin-btn2:active,
-.atuin-btn2:focus {
-    color: #FFF;
-}
-.atuin-btn2:after,
-.atuin-btn2:before {
-    position: absolute;
-    height: 4px;
-    left: 50%;
-    background: #337AB7;
-    bottom: -6px;
-    content: "";
-    transition: all 280ms ease-in-out;
-    width: 0;
-}
-.atuin-btn2:before {
-    top: -6px;
-}
-.atuin-btn2:hover:after,
-.atuin-btn2:hover:before,
-.atuin-btn2:active:after,
-.atuin-btn2:active:before,
-.atuin-btn2:focus:after,
-.atuin-btn2:focus:before {
-    width: 100%;
-    left: 0;
+    /*font-family: 'Ubuntu Condensed', sans-serif;*/
+    font-family: 'Teams', sans-serif;
+    text-indent: 22px;
+    line-height: 33px;
+    border: 1px solid #000000;
+    background: #afc1ff;
+    font-size: 18px;
 }
 
-/* КОНЕЦ КНОПКИ ДОБАВИТЬ */
+.first_blue {
+    /*font-family: 'Ubuntu Condensed', sans-serif;*/
+    font-family: 'Teams', sans-serif;
+    cursor: pointer;
+    background: #ffffff;
+    font-size: 18px;
+    color: #000000;
+    text-indent: 22px;
+    line-height: 33px;
+    border: 1PX SOLID #b7b7b7;
+}
+
+.show-button {
+    font-family: 'Ubuntu Condensed', sans-serif;
+    width: 20px;
+    height: 20px;
+}

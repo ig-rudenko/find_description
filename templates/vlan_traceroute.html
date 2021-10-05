@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block title %}
+Vlan traceroute
+{% endblock %}
+{% block header %}
+    VLAN traceroute
+{% endblock %}
+{% block content %}
+    <div style="text-align: left">
+        <p style="margin: 5px">Всего оборудования имеется: {{ devs_count }}</p>
+        <p style="margin: 5px">Из них VLAN'ов собрано: {{ intf_count }}</p>
+    </div>
+    <div class="center_">
+        <div style="text-align: center">
+            <div>
+                <input type="text" class="input-search" id="vlan" style="text-align: center">
+                <label class="search" for="input-search"></label>
+            </div>
+
+
+            <input class="atuin-btn" style="margin-top: 20px; text-align: center" type="button" value="Show MAP" onclick="show_map()">
+
+            <div id="load_circle" class="cssload-container" style="margin: 30px; padding-bottom: 20px; display: none">
+                <div class="cssload-whirlpool"></div>
+            </div>
+        </div>
+    </div>
+    <div id="main-div" style="padding-bottom: 20px; height: 100%">
+        <div style="padding-bottom: 20px; height: 100%" id="includedContent"></div>
+        <div id="content-point" style="text-align: center; margin: 20px"></div>
+    </div>
+
+{% endblock %}
+
+{% block javascript %}
+<script src="/static/jquery.min.js"></script>
+
+<script>
+
+FIRST = ''
+
+hashCode = s => String(s.split('').reduce((a,b)=>{a=((a<<5)-a)+b.charCodeAt(0);return a&a},0))
+
+function create_tree(data, add_after, sep) {
+    for (key in data) {
+
+        let regex = key.match(/(.+) --- (.*)/)
+        let line = ''
+        if (regex) {
+            let port = regex[1]
+            let desc = regex[2]
+            line = `<span style="color: blueviolet">(`+port+`)</span>     <span style="color: darkorange">`+desc+`</span>`
+        } else {
+            line = `<span style="color: royalblue">`+key+`</span>`
+        }
+        console.log(data[key], Boolean(Object.keys(data[key]).length))
+        if (Object.keys(data[key]).length) {
+            $('#'+add_after).after(`
+                <pre><p class="first"
+                   id="first`+hashCode(add_after+key)+`"
+                   style="display:none"
+                   onclick="first('`+hashCode(add_after+key)+`')">`+sep+line+`</p></pre>
+                <pre><p class="first_blue"
+                   id="first_yellow`+hashCode(add_after+key)+`"
+                   onclick="first_yellow('`+hashCode(add_after+key)+`')">`+sep+line+`</p></pre>
+                <div id="main`+hashCode(add_after+key)+`" style="display:block;">
+                    <div id="`+hashCode(add_after+key)+`"></div>
+                </div>`
+            )
+            create_tree(data[key], hashCode(add_after+key), sep+'     ')
+        } else {
+            console.log(sep, key, 'end')
+            $('#'+add_after).after(`
+               <pre><p class="first_blue" style="border: unset; cursor: unset;"
+               >`+sep+line+`</p></pre>`)
+        }
+
+    }
+}
+
+function vlan_traceroute(){
+    let vlan = document.getElementById('vlan').value
+    if (!vlan){return}
+    document.getElementById('main-div').innerHTML = '<div id="content-point" style="text-align: center; margin: 20px"></div>'
+    document.getElementById('load_circle').style.display = 'block'
+    $.ajax({
+        data: {'vlan': vlan},
+        type: 'get',
+        url: '/ajax/vlantraceroute',
+        success: function (resp) {
+            console.log(resp)
+            if (resp) {
+                document.getElementById('load_circle').style.display = 'none'
+                create_tree(resp, 'content-point', '')
+            }
+        },
+        error: function (resp) {
+            console.log(resp)
+            document.getElementById('load_circle').style.display = 'none'
+        }
+    })
+}
+
+function first(s) {
+    document.getElementById('main' + s).setAttribute("style", "opacity:1; transition: 1s; height: 100%;");
+    document.getElementById("first" + s).setAttribute("style", "display: none");
+    document.getElementById("first_yellow" + s).setAttribute("style", "display: block");
+}
+
+function first_yellow(s) {
+    document.getElementById('main' + s).setAttribute("style", "display: none");
+    document.getElementById("first_yellow" + s).setAttribute("style", "display: none");
+    document.getElementById("first" + s).setAttribute("style", "display: block");
+}
+
+
+function show_map() {
+    let vlan = document.getElementById('vlan').value
+    document.getElementById('load_circle').style.display = 'block'
+    //if (!vlan){return}
+    //window.location.href = '/vlan_map?vlan=' + vlan
+    $(function(){
+      $("#includedContent").load('/vlan_map?vlan=' + vlan);
+    });
+    document.getElementById('load_circle').style.display = 'none'
+}
+
+$(function(){
+      $("#includedContent").load('/vlan_map?vlan=1');
+});
+
+</script>
+
+{% endblock %}
