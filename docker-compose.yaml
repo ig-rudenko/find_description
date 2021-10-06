@@ -9,5 +9,6 @@ services:
       - "8000:8000"
     volumes:
       - ./db.sqlite3:/home/db.sqlite3
+      - /home/irudenko/zabbix_scripts/zabbix-devices-output/data/:/home/data
       - ./config:/home/config
       - ./vlan_traceroute/name_format.yaml:/home/vlan_traceroute/name_format.yaml

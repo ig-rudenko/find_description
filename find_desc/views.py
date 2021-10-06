@@ -81,6 +81,48 @@ def get_vlan(request):
     TREE = {}
     passed = set()
 
+    find_vlan(
+        device='SVSL-99-GP15-SSW1',
+        vlan_to_find=int(request.GET['vlan']),
+        dict_enter=TREE,
+        passed_devices=passed
+    )
+
+    return JsonResponse(TREE)
+
+
+@login_required(login_url='accounts/login/')
+def vlan_traceroute(request):
+    cfg = ConfigParser()
+    zabbix_url = ''
+    try:
+        cfg.read(f'{sys.path[0]}/config')
+        zabbix_url = cfg.get('data', 'zabbixurl')
+    except Exception:
+        pass
+
+    devs_count, intf_count = get_stat('vlans')
+    return render(
+        request,
+        'vlan_traceroute.html',
+        {
+            "devs_count": devs_count,
+            'intf_count': intf_count or 'None',
+            'zabbix_url': zabbix_url
+        }
+    )
+
+
+@login_required(login_url='accounts/login/')
+def get_vlan(request):
+    if not request.GET.get('vlan'):
+        return JsonResponse({
+            'data': {}
+        })
+
+    TREE = {}
+    passed = set()
+
     result = []
 
     find_vlan(

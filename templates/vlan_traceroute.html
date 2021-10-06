@@ -17,16 +17,14 @@ Vlan traceroute
                 <label class="search" for="input-search"></label>
             </div>
 
-
-            <input class="atuin-btn" style="margin-top: 20px; text-align: center" type="button" value="Show MAP" onclick="show_map()">
+            <input class="atuin-btn" style="margin-top: 20px; text-align: center" type="button" value="Traceroute" onclick="vlan_traceroute()">
 
             <div id="load_circle" class="cssload-container" style="margin: 30px; padding-bottom: 20px; display: none">
                 <div class="cssload-whirlpool"></div>
             </div>
         </div>
     </div>
-    <div id="main-div" style="padding-bottom: 20px; height: 100%">
-        <div style="padding-bottom: 20px; height: 100%" id="includedContent"></div>
+    <div id="main-div" style="padding-bottom: 20px">
         <div id="content-point" style="text-align: center; margin: 20px"></div>
     </div>
 
@@ -79,7 +77,7 @@ function create_tree(data, add_after, sep) {
 }
 
 function vlan_traceroute(){
-    let vlan = document.getElementById('vlan').value
+    vlan = document.getElementById('vlan').value
     if (!vlan){return}
     document.getElementById('main-div').innerHTML = '<div id="content-point" style="text-align: center; margin: 20px"></div>'
     document.getElementById('load_circle').style.display = 'block'
@@ -112,22 +110,6 @@ function first_yellow(s) {
     document.getElementById("first_yellow" + s).setAttribute("style", "display: none");
     document.getElementById("first" + s).setAttribute("style", "display: block");
 }
-
-
-function show_map() {
-    let vlan = document.getElementById('vlan').value
-    document.getElementById('load_circle').style.display = 'block'
-    //if (!vlan){return}
-    //window.location.href = '/vlan_map?vlan=' + vlan
-    $(function(){
-      $("#includedContent").load('/vlan_map?vlan=' + vlan);
-    });
-    document.getElementById('load_circle').style.display = 'none'
-}
-
-$(function(){
-      $("#includedContent").load('/vlan_map?vlan=1');
-});
 
 </script>
 
