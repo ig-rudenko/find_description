@@ -18,13 +18,29 @@ Vlan traceroute
             </div>
 
             <input class="atuin-btn" style="margin-top: 20px; text-align: center" type="button" value="Traceroute" onclick="vlan_traceroute()">
+            <input class="atuin-btn" style="margin-top: 20px; text-align: center" type="button" value="Show MAP" onclick="show_map()">
+            <div style="text-align: right">
+                <label>
+                Показывать пустые порты
+                <input type="checkbox" id="empty-ports">
+            </label>
+            </div>
+
+            <div style="text-align: right">
+                <label>
+                Обозначать admin down порты тонкой линией связи
+                <input type="checkbox" id="only-admin-up">
+            </label>
+            </div>
 
             <div id="load_circle" class="cssload-container" style="margin: 30px; padding-bottom: 20px; display: none">
                 <div class="cssload-whirlpool"></div>
             </div>
         </div>
     </div>
-    <div id="main-div" style="padding-bottom: 20px">
+    <div style="height: 100%" id="includedContent"></div>
+    <div id="main-div" style="padding-bottom: 10px;">
+
         <div id="content-point" style="text-align: center; margin: 20px"></div>
     </div>
 
@@ -77,12 +93,12 @@ function create_tree(data, add_after, sep) {
 }
 
 function vlan_traceroute(){
-    vlan = document.getElementById('vlan').value
+    let vlan = document.getElementById('vlan').value
     if (!vlan){return}
     document.getElementById('main-div').innerHTML = '<div id="content-point" style="text-align: center; margin: 20px"></div>'
     document.getElementById('load_circle').style.display = 'block'
     $.ajax({
-        data: {'vlan': vlan},
+        data: {'vlan': vlan, 'json': true},
         type: 'get',
         url: '/ajax/vlantraceroute',
         success: function (resp) {
@@ -110,6 +126,24 @@ function first_yellow(s) {
     document.getElementById("first_yellow" + s).setAttribute("style", "display: none");
     document.getElementById("first" + s).setAttribute("style", "display: block");
 }
+
+
+function show_map() {
+    let vlan = document.getElementById('vlan').value
+    let empty_ports = document.getElementById('empty-ports').checked
+    let only_admin_up = document.getElementById('only-admin-up').checked
+    document.getElementById('load_circle').style.display = 'block'
+    if (!vlan){return}
+
+    $(function(){
+      $("#includedContent").load('/vlan_map?vlan=' + vlan + '&ep=' + empty_ports + '&ad=' + only_admin_up);
+    });
+    document.getElementById('load_circle').style.display = 'none'
+}
+
+$(function(){
+      $("#includedContent").load('/vlan_map?vlan=1');
+});
 
 </script>
 
