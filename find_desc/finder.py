@@ -157,20 +157,27 @@ def find_vlan(device: str, vlan_to_find: int, passed_devices: set, dict_enter: d
         vlans_list = []  # Список VLAN'ов на порту
         if 'all' in line["VLAN's"]:
             # Если разрешено пропускать все вланы
-            vlans_list = list(range(1, 4097))
+            vlans_list = list(range(1, 4097))  # 1-4096
         else:
             if 'to' in line["VLAN's"]:
-                # Если имеется формат "trunk,1 to 7 12 to 44"
+                # Если имеется формат "711 800 to 804 1959 1961 1994 2005"
+                # Определяем диапазон 800 to 804
                 vv = [list(range(int(v[0]), int(v[1]) + 1)) for v in
                       [range_ for range_ in findall(r'(\d+)\s*to\s*(\d+)', line["VLAN's"])]]
                 for v in vv:
                     vlans_list += v
+                # Добавляем единичные 711 800 to 801 1959 1961 1994 2005
+                print(line["VLAN's"].split())
+
+                vlans_list += line["VLAN's"].split()
             else:
                 # Формат представления стандартный "trunk,123,33,10-100"
                 vlans_list = vlan_range([v for v in line["VLAN's"].split(',') if
                                          v != 'trunk' and v != 'access' and v != 'hybrid' and v != 'dot1q-tunnel'])
                 # Если искомый vlan находится в списке vlan'ов на данном интерфейсе
-        if vlan_to_find in vlans_list:
+
+        # Если нашли влан в списке вланов
+        if vlan_to_find in vlans_list or str(vlan_to_find) in vlans_list:
 
             intf_found_count += 1
 

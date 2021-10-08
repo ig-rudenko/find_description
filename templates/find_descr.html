@@ -7,11 +7,13 @@
         <p style="margin: 5px">Всего оборудования имеется: {{ devs_count }}</p>
         <p style="margin: 5px">Из них интерфейсов собрано: {{ intf_count }}</p>
     </div>
-    <div class="center_">
+    <div class="center_" style="min-height: 70%">
         <div style="text-align: center">
             <label style="text-align: center">
                 Необходимо найти:
-                <input id="find_str" type="text" required style="width: 450px; margin: 10px; margin-right: 0" content="asd">
+                <input id="find_str" type="text" required
+                       style="width: 450px; margin: 10px; margin-right: 0; font-size: 22px"
+                       content="asd">
             </label>
             <input class="atuin-btn" type="button" value="строгий поиск" onclick="start_find('string')">
             <input class="atuin-btn" type="button" value="как регулярное выражение" onclick="start_find('regex')">
@@ -21,11 +23,10 @@
                 <div class="cssload-whirlpool"></div>
             </div>
         </div>
+        <div>
+            <div id="content-point" style="text-align: center; margin: 20px"></div>
+        </div>
     </div>
-    <div>
-        <div id="content-point" style="text-align: center; margin: 20px"></div>
-    </div>
-
 
 {% endblock %}
 
