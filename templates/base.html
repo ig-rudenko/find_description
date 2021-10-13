@@ -25,8 +25,10 @@
             {% block header %}{% endblock %}
         </h1>
             {% block content %}{% endblock %}
-        <div>
-            {% block footer %}{% endblock %}
+        <div style="padding-bottom: 20px; text-align: center">
+            {% block footer %}
+                Если нашли несоответствие, то пишите на <a href="mailto:irudenko@sevtelecom.ru">irudenko@sevtelecom.ru</a>
+            {% endblock %}
         </div>
     {% endblock %}
     {% block javascript %}{% endblock %}

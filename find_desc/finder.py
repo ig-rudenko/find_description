@@ -126,7 +126,8 @@ cfg.read(f'{sys.path[0]}/config')
 data_dir = cfg.get('data', 'path')
 
 
-def find_vlan(device: str, vlan_to_find: int, passed_devices: set, dict_enter: dict, result: list):
+def find_vlan(device: str, vlan_to_find: int, passed_devices: set, dict_enter: dict, result: list,
+              empty_ports: str, only_admin_up: str):
     """
         Осуществляет поиск VLAN'ов по портам оборудования, которое расположено в папке /root_dir/data/device/
         И имеет файл vlans.yaml
@@ -137,6 +138,7 @@ def find_vlan(device: str, vlan_to_find: int, passed_devices: set, dict_enter: d
         """
 
     dict_enter[device] = {}
+    admin_status = ''  # Состояние порта
 
     passed_devices.add(device)  # Добавляем узел в список уже пройденных устройств
     if not os.path.exists(os.path.join(data_dir, device, 'vlans.yaml')):
@@ -155,33 +157,77 @@ def find_vlan(device: str, vlan_to_find: int, passed_devices: set, dict_enter: d
         vlans_list = []  # Список VLAN'ов на порту
         if 'all' in line["VLAN's"]:
             # Если разрешено пропускать все вланы
-            vlans_list = list(range(1, 4097))
+            vlans_list = list(range(1, 4097))  # 1-4096
         else:
             if 'to' in line["VLAN's"]:
-                # Если имеется формат "trunk,1 to 7 12 to 44"
+                # Если имеется формат "711 800 to 804 1959 1961 1994 2005"
+                # Определяем диапазон 800 to 804
                 vv = [list(range(int(v[0]), int(v[1]) + 1)) for v in
                       [range_ for range_ in findall(r'(\d+)\s*to\s*(\d+)', line["VLAN's"])]]
                 for v in vv:
                     vlans_list += v
+                # Добавляем единичные 711 800 to 801 1959 1961 1994 2005
+                print(line["VLAN's"].split())
+
+                vlans_list += line["VLAN's"].split()
             else:
                 # Формат представления стандартный "trunk,123,33,10-100"
                 vlans_list = vlan_range([v for v in line["VLAN's"].split(',') if
                                          v != 'trunk' and v != 'access' and v != 'hybrid' and v != 'dot1q-tunnel'])
                 # Если искомый vlan находится в списке vlan'ов на данном интерфейсе
-        if vlan_to_find in vlans_list:
+
+        # Если нашли влан в списке вланов
+        if vlan_to_find in vlans_list or str(vlan_to_find) in vlans_list:
 
             intf_found_count += 1
 
+            # Словарь для json ответа
             dict_enter[device][line["Interface"] + ' --- ' + line["Description"]] = {}
 
-            next_device = findall(r'SVSL\S+SW\d+', line["Description"])  # Ищем в описании порта следующий узел сети
+            next_device = findall(r'SVSL\S+?SW\d+', line["Description"])  # Ищем в описании порта следующий узел сети
             # Приводим к единому формату имя узла сети
             next_device = reformatting(next_device[0]) if next_device else ''
 
-            # Создаем данные для visual
+            # Пропускаем порты admin down, если включена опция only admin up
+            if only_admin_up == 'true':
+                admin_status = 'down' if \
+                    'down' in str(line.get('Admin Status')).lower() or 'dis' in str(line.get('Admin Status')).lower() \
+                    or 'admin down' in str(line.get('Status')).lower() or 'dis' in str(line.get('Status')).lower() \
+                    else 'up'
+
+            # Создаем данные для visual map
             if next_device:
+                # Следующий узел сети
                 result.append(
-                    (device, next_device, 10, line["Interface"] + ' --- ' + line["Description"])
+                    (
+                        device,  # Устройство (название узла)
+                        next_device,  # Сосед (название узла)
+                        10,  # Толщина линии соединения
+                        f'{device} ({line["Interface"]}) --- {line["Description"]}',  # Описание линии соединения
+                        admin_status
+                    )
+                )
+            # Порт с описанием
+            elif line["Description"]:
+                result.append(
+                    (
+                        device,  # Устройство (название узла)
+                        line["Description"],  # Порт (название узла)
+                        10,  # Толщина линии соединения
+                        line["Interface"],  # Описание линии соединения
+                        admin_status
+                    )
+                )
+            # Пустые порты
+            elif empty_ports == 'true':
+                result.append(
+                    (
+                        device,  # Устройство (название узла)
+                        f'{device} p:({line["Interface"]})',  # Порт (название узла)
+                        5,  # Толщина линии соединения
+                        line["Interface"],  # Описание линии соединения
+                        admin_status
+                    )
                 )
 
             if next_device and next_device not in list(passed_devices):
@@ -190,5 +236,7 @@ def find_vlan(device: str, vlan_to_find: int, passed_devices: set, dict_enter: d
                     vlan_to_find,
                     passed_devices,
                     dict_enter=dict_enter[device][line["Interface"] + ' --- ' + line["Description"]],
-                    result=result
+                    result=result,
+                    empty_ports=empty_ports,
+                    only_admin_up=only_admin_up
                 )
