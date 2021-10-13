@@ -36,6 +36,6 @@
 
 По умолчанию логин/пароль суперпользователя: root/password
 
-![img.png](static/img/img.png)
+![img.png](static/img/img2.png)
 ![img.png](static/img/img4.png)
 ![img.png](static/img/img1.png)
