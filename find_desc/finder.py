@@ -153,9 +153,8 @@ def find_vlan(device: str, vlan_to_find: int, passed_devices: set, dict_enter: d
     intf_found_count = 0  # Кол-во найденных интерфейсов на этом устройстве
 
     for line in interfaces:
-
         vlans_list = []  # Список VLAN'ов на порту
-        if 'all' in line["VLAN's"]:
+        if 'all' in line["VLAN's"] or line["VLAN's"].strip() == 'trunk':
             # Если разрешено пропускать все вланы
             vlans_list = list(range(1, 4097))  # 1-4096
         else:
