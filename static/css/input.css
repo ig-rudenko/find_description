@@ -12,6 +12,13 @@
   font-weight: lighter;
   color: #000000;
   border-radius: 50px;
+  height: 30px;
+  width: 50px;
+  padding: 0 0px;
+  font-size: 1.1em;
+  font-weight: lighter;
+  color: #000000;
+  border-radius: 24px;
   -webkit-transition: all 0.4s;
   transition: all 0.4s;
   -webkit-transition-timing-function: ease-out;
@@ -20,6 +27,7 @@
 
 .input-search:focus {
   width: 70px;
+  width: 100px;
   padding: 0 12px;
   outline:none;
 }
@@ -32,6 +40,11 @@
   position: absolute;
   right: -12px;
   bottom: -22px;
+  width: 15px;
+  display: block;
+  position: absolute;
+  right: -6px;
+  bottom: -8px;
   -ms-transform: rotate(45deg);
   -webkit-transform: rotate(45deg);
   transform: rotate(45deg);
@@ -47,6 +60,7 @@
   display: block;
   position: absolute;
   right: -111px;
+  right: -2px;
   bottom: 19px;
   -ms-transform: rotate(-45deg);
   -webkit-transform: rotate(-45deg);
@@ -75,6 +89,8 @@
   right: 10px;
   bottom: 5px;
   width: 25px;
+  bottom: 9px;
+  width: 15px;
   -webkit-transition: all 0.1s;
   transition: all 0.1s;
   -webkit-transition-timing-function: ease-in;
