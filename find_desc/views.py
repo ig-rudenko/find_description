@@ -162,6 +162,15 @@ def get_vlan(request):
             dst_gr = 9
             dst_shape = 'triangle'
             dst_label = dst.split('p:(')[1][:-1]
+        # Только описание
+        if "d:(" in str(src).lower():
+            src_gr = 3
+            # src_shape = 'triangle'
+            src_label = src.split('d:(')[1][:-1]
+        if "d:(" in str(dst).lower():
+            dst_gr = 3
+            # dst_shape = 'triangle'
+            dst_label = dst.split('d:(')[1][:-1]
 
         # Если стиль отображения admin down status
         if request.GET.get('ad') == 'true' and admin_status == 'down':

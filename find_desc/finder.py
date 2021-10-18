@@ -211,7 +211,7 @@ def find_vlan(device: str, vlan_to_find: int, passed_devices: set, dict_enter: d
                 result.append(
                     (
                         device,  # Устройство (название узла)
-                        line["Description"],  # Порт (название узла)
+                        f'{device} d:({line["Description"]})',  # Порт (название узла)
                         10,  # Толщина линии соединения
                         line["Interface"],  # Описание линии соединения
                         admin_status
