@@ -127,7 +127,7 @@ data_dir = cfg.get('data', 'path')
 
 
 def find_vlan(device: str, vlan_to_find: int, passed_devices: set, dict_enter: dict, result: list,
-              empty_ports: str, only_admin_up: str):
+              empty_ports: str, only_admin_up: str, find_device_pattern: str):
     """
         Осуществляет поиск VLAN'ов по портам оборудования, которое расположено в папке /root_dir/data/device/
         И имеет файл vlans.yaml
@@ -183,7 +183,7 @@ def find_vlan(device: str, vlan_to_find: int, passed_devices: set, dict_enter: d
             # Словарь для json ответа
             dict_enter[device][line["Interface"] + ' --- ' + line["Description"]] = {}
 
-            next_device = findall(r'SVSL\S+?SW\d+', line["Description"])  # Ищем в описании порта следующий узел сети
+            next_device = findall(find_device_pattern, line["Description"])  # Ищем в описании порта следующий узел сети
             # Приводим к единому формату имя узла сети
             next_device = reformatting(next_device[0]) if next_device else ''
 
@@ -237,5 +237,6 @@ def find_vlan(device: str, vlan_to_find: int, passed_devices: set, dict_enter: d
                     dict_enter=dict_enter[device][line["Interface"] + ' --- ' + line["Description"]],
                     result=result,
                     empty_ports=empty_ports,
-                    only_admin_up=only_admin_up
+                    only_admin_up=only_admin_up,
+                    find_device_pattern=find_device_pattern
                 )

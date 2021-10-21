@@ -136,9 +136,15 @@ function show_map() {
     if (!vlan){return}
 
     $(function(){
-      $("#includedContent").load('/vlan_map?vlan=' + vlan + '&ep=' + empty_ports + '&ad=' + only_admin_up);
+      $("#includedContent").load(
+          '/vlan_map?vlan=' + vlan + '&ep=' + empty_ports + '&ad=' + only_admin_up,
+          function (response, status) {
+              if (status === "success") {
+                  document.getElementById('load_circle').style.display = 'none'
+              }
+          }
+      );
     });
-    document.getElementById('load_circle').style.display = 'none'
 }
 
 $(function(){

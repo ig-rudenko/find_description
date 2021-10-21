@@ -2,4 +2,7 @@
 # Полный путь до папки `data` проекта `Zabbix Devices Output`
 path=/full/path/zabbix-devices-output/data/
 
-zabbixurl=https://localhost/zabbix
+zabbixurl=https://10.100.0.50/zabbix
+
+vlan_start=Korp-huawei-1, korp-cisco-1
+find_device_pattern=[Kk]orp\S+?-\d+

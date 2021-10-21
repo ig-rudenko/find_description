@@ -1,5 +1,4 @@
 import os
-
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
@@ -45,7 +44,7 @@ def find_as_str(request):
         stop_on=request.GET.get('stop_on')
     )
     print(len(result))
-    # print({'data': result, 'status': 'next' if result else 'end'})
+
     return JsonResponse({
         'data': result,
         'status': 'next' if result else 'end'
@@ -80,32 +79,61 @@ def get_vlan(request):
         return JsonResponse({
             'data': {}
         })
+    print(request.GET)
 
-    TREE = {}
-    passed = set()
+    cfg = ConfigParser()
+    cfg.read(f'{sys.path[0]}/config')
 
-    result = []
+    # Определяем список устройств откуда будет начинаться трассировка vlan
+    vlan_start = cfg.get('data', 'vlan_start').split(', ')
 
-    find_vlan(
-        device='SVSL-99-GP15-SSW1',
-        vlan_to_find=int(request.GET['vlan']),
-        dict_enter=TREE,
-        passed_devices=passed,
-        result=result,
-        empty_ports=request.GET.get('ep'),
-        only_admin_up=request.GET.get('ad')
-    )
+    # Определяем паттерн для поиска интерфейсов
+    # Не используем configparser, так как он использует символ % как служебный, открываем просто как файл
+    with open(f'{sys.path[0]}/config') as cf:
+        find_device_pattern = findall('find_device_pattern=(.*)', cf.read())
+    if not find_device_pattern:
+        # Если не нашли, то обнуляем список начальных устройств для поиска, чтобы не запускать трассировку vlan
+        vlan_start = []
 
-    if request.GET.get('json'):
+    for start_dev in vlan_start:
+        TREE = {}  # Древовидный вывод
+        passed = set()  # Имена уже проверненных устройств
+        result = []  # Список узлов сети, соседей и линий связи для визуализации
+
+        try:
+            vlan = int(request.GET['vlan'])
+        except ValueError:
+            break
+
+        # трассировка vlan
+        find_vlan(
+            device=start_dev,
+            vlan_to_find=vlan,
+            dict_enter=TREE,
+            passed_devices=passed,
+            result=result,
+            empty_ports=request.GET.get('ep'),
+            only_admin_up=request.GET.get('ad'),
+            find_device_pattern=find_device_pattern[0]
+        )
+        print(result)
+        if result:  # Если поиск дал результат, то прекращаем
+            break
+
+    else:  # Если поиск не дал результатов
+        TREE = {}
+        result = []
+
+    if request.GET.get('json'):  # Если необходимо отдать данные в json формате
         return JsonResponse(TREE)
 
-    sevnet = Network(height="100%", width="100%", bgcolor="#ffffff", font_color="black")
+    net = Network(height="100%", width="100%", bgcolor="#ffffff", font_color="black")
 
     # Создаем невидимые элементы, для инициализации групп 0-9
     # 0 - голубой;  1 - желтый;  2 - красный;  3 - зеленый;  4 - розовый;
     # 5 - пурпурный;  6 - оранжевый;  7 - синий;  8 - светло-красный;  9 - светло-зеленый
     for i in range(10):
-        sevnet.add_node(i, i, title='', group=i, hidden=True)
+        net.add_node(i, i, title='', group=i, hidden=True)
 
     # Создаем элементы и связи между ними
     for e in result:
@@ -122,17 +150,20 @@ def get_vlan(request):
         dst_shape = 'dot'
         src_label = src
         dst_label = dst
+
+        # ASW: желтый
         if "ASW" in str(src):
             src_gr = 1
         if "ASW" in str(dst):
             dst_gr = 1
+
+        # SSW: голубой
         if "SSW" in str(src):
             src_gr = 0
         if "SSW" in str(dst):
             dst_gr = 0
-        if "SVSL-99-GP15-SSW" in src or "SVSL-99-GP15-SSW" in dst:
-            src_gr = 4
-            src_shape = 'diamond'
+
+        # Порт: зеленый, форма треугольника - △
         if "-->" in str(src).lower():
             src_gr = 3
             src_shape = 'triangle'
@@ -141,19 +172,27 @@ def get_vlan(request):
             dst_gr = 3
             dst_shape = 'triangle'
             dst_label = src.split('-->')[1]
+
+        # DSL: оранжевый, форма квадрата - ☐
         if "DSL" in str(src):
             src_gr = 6
             src_shape = 'square'
         if "DSL" in str(dst):
             dst_gr = 6
             dst_shape = 'square'
+
+        # CORE: розовый, форма ромба - ◊
+        if "SVSL-99-GP15-SSW" in src or "SVSL-99-GP15-SSW" in dst:
+            src_gr = 4
+            src_shape = 'diamond'
         if "core" in str(src).lower() or "-cr" in str(dst).lower():
             src_gr = 4
             src_shape = 'diamond'
         if "core" in str(dst).lower() or "-cr" in str(src).lower():
             dst_gr = 4
             dst_shape = 'diamond'
-        # Пустой порт
+
+        # Пустой порт: светло-зеленый, форма треугольника - △
         if "p:(" in str(src).lower():
             src_gr = 9
             src_shape = 'triangle'
@@ -162,44 +201,43 @@ def get_vlan(request):
             dst_gr = 9
             dst_shape = 'triangle'
             dst_label = dst.split('p:(')[1][:-1]
-        # Только описание
+
+        # Только описание: зеленый
         if "d:(" in str(src).lower():
             src_gr = 3
-            # src_shape = 'triangle'
             src_label = src.split('d:(')[1][:-1]
         if "d:(" in str(dst).lower():
             dst_gr = 3
-            # dst_shape = 'triangle'
             dst_label = dst.split('d:(')[1][:-1]
 
         # Если стиль отображения admin down status
         if request.GET.get('ad') == 'true' and admin_status == 'down':
-            w = 0.5
+            w = 0.5  # ширина линии связи
         print(src, admin_status)
 
-        all_nodes = sevnet.get_nodes()
-        # Создаем узел, если его не было
+        all_nodes = net.get_nodes()
+        # Создаем узлы, если их не было
         if src not in all_nodes:
-            sevnet.add_node(src, src_label, title=src_label, group=src_gr, shape=src_shape)
+            net.add_node(src, src_label, title=src_label, group=src_gr, shape=src_shape)
 
         if dst not in all_nodes:
-            sevnet.add_node(dst, dst_label, title=src_label, group=dst_gr, shape=dst_shape)
+            net.add_node(dst, dst_label, title=src_label, group=dst_gr, shape=dst_shape)
 
-        sevnet.add_edge(src, dst, value=w, title=desc)
+        net.add_edge(src, dst, value=w, title=desc)
 
-    neighbor_map = sevnet.get_adj_list()
-    nodes_count = len(sevnet.nodes)
+    neighbor_map = net.get_adj_list()
+    nodes_count = len(net.nodes)
 
     print('Всего узлов создано:', nodes_count)
     # add neighbor data to node hover data
 
     # set the physics layout of the network
-    sevnet.repulsion(
+    net.repulsion(
         node_distance=nodes_count if nodes_count > 130 else 130,
         damping=0.89
     )
 
-    for node in sevnet.nodes:
+    for node in net.nodes:
         node["value"] = len(neighbor_map[node["id"]]) * 3
         if "core" in node["title"].lower():
             node["value"] = 70
@@ -209,11 +247,11 @@ def get_vlan(request):
         if "p:(" in node["title"]:
             node["value"] = 1
         node["title"] += " Соединено:<br>" + "<br>".join(neighbor_map[node["id"]])
-    # sevnet.show_buttons(filter_=True)
-    sevnet.set_edge_smooth('dynamic')
+    # net.show_buttons(filter_=True)
+    net.set_edge_smooth('dynamic')
 
     if not os.path.exists(f"{sys.path[0]}/templates/vlans"):
         os.makedirs(f"{sys.path[0]}/templates/vlans")
-    sevnet.save_graph(f"{sys.path[0]}/templates/vlans/vlan{request.GET['vlan']}.html")
+    net.save_graph(f"{sys.path[0]}/templates/vlans/vlan{request.GET['vlan']}.html")
     print('save')
     return render(request, f"vlans/vlan{request.GET['vlan']}.html")
