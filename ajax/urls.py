@@ -4,5 +4,6 @@ from find_desc import views
 urlpatterns = [
     path('', views.home, name='home'),
     path('find', views.find_as_str, name='find'),
-    path('vlantraceroute', views.get_vlan, name='vlantraceroute')
+    path('vlantraceroute', views.get_vlan, name='vlantraceroute'),
+    path('vlan_desc', views.get_vlan_desc),
 ]

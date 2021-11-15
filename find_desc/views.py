@@ -1,4 +1,5 @@
 import os
+import yaml
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
@@ -71,6 +72,22 @@ def vlan_traceroute(request):
             'zabbix_url': zabbix_url
         }
     )
+
+
+@login_required(login_url='accounts/login/')
+def get_vlan_desc(request):
+    print(request.GET)
+    try:
+        vlan = int(request.GET.get('vlan'))
+    except ValueError:
+        vlan = None
+
+    if vlan and os.path.exists(f'{sys.path[0]}/vlan_traceroute/vlans.yaml'):
+        with open(f'{sys.path[0]}/vlan_traceroute/vlans.yaml') as f:
+            file = yaml.safe_load(f)
+            return JsonResponse({'vlan_desc': file.get(vlan) or ''})
+
+    return JsonResponse({})
 
 
 @login_required(login_url='accounts/login/')

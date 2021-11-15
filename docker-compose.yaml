@@ -5,6 +5,7 @@ services:
     container_name: find_descr_vlan
     image: find_descr_vlan:0.7
     command: python manage.py runserver 0.0.0.0:8000
+    restart: always
     ports:
       - "8000:8000"
     volumes:
