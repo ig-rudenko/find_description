@@ -4,7 +4,7 @@
   margin: 10px 0 10px;
   padding: 25px 0 5px;
   text-align: center;
-  background: white;
+  /*background: white;*/
 }
 .menu-main li {display: inline-block;}
 .menu-main li:after {

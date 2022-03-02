@@ -3,30 +3,38 @@
 Vlan traceroute
 {% endblock %}
 {% block header %}
-    VLAN traceroute
+    <p style="color: #dcdcdc">VLAN traceroute</p>
 {% endblock %}
 {% block content %}
+    <style>
+        body {
+            background-image: url("/static/img/background.png");
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-color: #222222;
+        }
+    </style>
     <div style="text-align: left">
-        <p style="margin: 5px">Всего оборудования имеется: {{ devs_count }}</p>
-        <p style="margin: 5px">Из них VLAN'ов собрано: {{ intf_count }}</p>
+        <p style="margin: 5px; color: #909090">Всего оборудования имеется: {{ devs_count }}</p>
+        <p style="margin: 5px; color: #909090">Из них VLAN'ов собрано: {{ intf_count }}</p>
     </div>
     <div class="center_">
         <div style="text-align: center">
             <div>
-                <input type="text" class="input-search" id="vlan" style="text-align: center">
+                <input type="text" class="input-search" id="vlan" style="text-align: center; background-color: #3e3e3e">
                 <label class="search" for="input-search"></label>
             </div>
-            <div style="margin-top: 20px">
-                <label id="vlan-desc"></label>
+            <div style="margin-top: 20px; color: white">
+                <label id="vlan-desc" style="border-radius: 5px; background-color: #3e3e3e; margin-top: 10px"></label>
             </div>
-            <div style="text-align: right">
+            <div style="text-align: right; color: white">
                 <label>
                 Показывать пустые порты
                 <input type="checkbox" id="empty-ports">
             </label>
             </div>
 
-            <div style="text-align: right">
+            <div style="text-align: right; color: white">
                 <label>
                 Обозначать admin down порты тонкой линией связи
                 <input type="checkbox" id="only-admin-up">
@@ -45,10 +53,15 @@ Vlan traceroute
     </div>
 
 {% endblock %}
-
+{% block footer %}
+    <p style="color: white">Если нашли несоответствие, то пишите на
+        <a style="color: #4ac1f7" href="mailto:irudenko@sevtelecom.ru">irudenko@sevtelecom.ru</a>
+    </p>
+{% endblock %}
 {% block javascript %}
 <script src="/static/jquery.min.js"></script>
-
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.css" type="text/css" />
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis-network.min.js"> </script>
 <script>
 
 function show_map() {
@@ -64,15 +77,18 @@ function show_map() {
         url: '/ajax/vlan_desc',
         success: function (resp) {
             console.log(resp)
-            if (resp) {
+            if (resp.vlan_desc) {
                 document.getElementById('vlan-desc').innerText = resp.vlan_desc
+                document.getElementById('vlan-desc').style.padding = "8px"
             } else {
                 document.getElementById('vlan-desc').innerText = ''
+                document.getElementById('vlan-desc').style.padding = "0"
             }
         },
         error: function (resp) {
             console.log('error', resp)
             document.getElementById('vlan-desc').innerText = ''
+            document.getElementById('vlan-desc').style.padding = "0"
         }
     })
 
@@ -89,10 +105,6 @@ function show_map() {
       );
     });
 }
-
-$(function(){
-      $("#includedContent").load('/vlan_map?vlan=1');
-});
 
 $("#vlan").keyup(function(event) {
     if (event.keyCode === 13) {

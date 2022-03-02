@@ -144,7 +144,7 @@ def get_vlan(request):
     if request.GET.get('json'):  # Если необходимо отдать данные в json формате
         return JsonResponse(TREE)
 
-    net = Network(height="100%", width="100%", bgcolor="#ffffff", font_color="black")
+    net = Network(height="100%", width="100%", bgcolor="#222222", font_color="white")
 
     # Создаем невидимые элементы, для инициализации групп 0-9
     # 0 - голубой;  1 - желтый;  2 - красный;  3 - зеленый;  4 - розовый;
