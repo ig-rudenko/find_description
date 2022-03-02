@@ -19,9 +19,6 @@ Vlan traceroute
             <div style="margin-top: 20px">
                 <label id="vlan-desc"></label>
             </div>
-
-            <input class="atuin-btn" style="margin-top: 20px; text-align: center" type="button" value="Traceroute" onclick="vlan_traceroute()">
-            <input class="atuin-btn" style="margin-top: 20px; text-align: center" type="button" value="Show MAP" onclick="show_map()">
             <div style="text-align: right">
                 <label>
                 Показывать пустые порты
@@ -54,88 +51,12 @@ Vlan traceroute
 
 <script>
 
-FIRST = ''
-
-hashCode = s => String(s.split('').reduce((a,b)=>{a=((a<<5)-a)+b.charCodeAt(0);return a&a},0))
-
-function create_tree(data, add_after, sep) {
-    for (key in data) {
-
-        let regex = key.match(/(.+) --- (.*)/)
-        let line = ''
-        if (regex) {
-            let port = regex[1]
-            let desc = regex[2]
-            line = `<span style="color: blueviolet">(`+port+`)</span>     <span style="color: darkorange">`+desc+`</span>`
-        } else {
-            line = `<span style="color: royalblue">`+key+`</span>`
-        }
-        console.log(data[key], Boolean(Object.keys(data[key]).length))
-        if (Object.keys(data[key]).length) {
-            $('#'+add_after).after(`
-                <pre><p class="first"
-                   id="first`+hashCode(add_after+key)+`"
-                   style="display:none"
-                   onclick="first('`+hashCode(add_after+key)+`')">`+sep+line+`</p></pre>
-                <pre><p class="first_blue"
-                   id="first_yellow`+hashCode(add_after+key)+`"
-                   onclick="first_yellow('`+hashCode(add_after+key)+`')">`+sep+line+`</p></pre>
-                <div id="main`+hashCode(add_after+key)+`" style="display:block;">
-                    <div id="`+hashCode(add_after+key)+`"></div>
-                </div>`
-            )
-            create_tree(data[key], hashCode(add_after+key), sep+'     ')
-        } else {
-            console.log(sep, key, 'end')
-            $('#'+add_after).after(`
-               <pre><p class="first_blue" style="border: unset; cursor: unset;"
-               >`+sep+line+`</p></pre>`)
-        }
-
-    }
-}
-
-function vlan_traceroute(){
-    let vlan = document.getElementById('vlan').value
-    if (!vlan){return}
-    document.getElementById('main-div').innerHTML = '<div id="content-point" style="text-align: center; margin: 20px"></div>'
-    document.getElementById('load_circle').style.display = 'block'
-    $.ajax({
-        data: {'vlan': vlan, 'json': true},
-        type: 'get',
-        url: '/ajax/vlantraceroute',
-        success: function (resp) {
-            if (resp) {
-                document.getElementById('load_circle').style.display = 'none'
-                create_tree(resp, 'content-point', '')
-            }
-        },
-        error: function (resp) {
-            console.log(resp)
-            document.getElementById('load_circle').style.display = 'none'
-        }
-    })
-}
-
-function first(s) {
-    document.getElementById('main' + s).setAttribute("style", "opacity:1; transition: 1s; height: 100%;");
-    document.getElementById("first" + s).setAttribute("style", "display: none");
-    document.getElementById("first_yellow" + s).setAttribute("style", "display: block");
-}
-
-function first_yellow(s) {
-    document.getElementById('main' + s).setAttribute("style", "display: none");
-    document.getElementById("first_yellow" + s).setAttribute("style", "display: none");
-    document.getElementById("first" + s).setAttribute("style", "display: block");
-}
-
-
 function show_map() {
     let vlan = document.getElementById('vlan').value
     let empty_ports = document.getElementById('empty-ports').checked
     let only_admin_up = document.getElementById('only-admin-up').checked
     document.getElementById('load_circle').style.display = 'block'
-    if (!vlan){return}
+    if (!vlan){document.getElementById('load_circle').style.display = 'none';return}
 
     $.ajax({
         data: {'vlan': vlan},
@@ -171,6 +92,12 @@ function show_map() {
 
 $(function(){
       $("#includedContent").load('/vlan_map?vlan=1');
+});
+
+$("#vlan").keyup(function(event) {
+    if (event.keyCode === 13) {
+        show_map();
+    }
 });
 
 </script>
