@@ -15,8 +15,9 @@ Vlan traceroute
         }
     </style>
     <div style="text-align: left">
-        <p style="margin: 5px; color: #909090">Всего оборудования имеется: {{ devs_count }}</p>
-        <p style="margin: 5px; color: #909090">Из них VLAN'ов собрано: {{ intf_count }}</p>
+        <p style="margin: 5px; color: #909090">Оборудования в базе: {{ devs_count }}</p>
+        <p style="margin: 5px; color: #909090">Проанализировано: {{ intf_count }}</p>
+        <div id="container" style="width: 220px; height: 10px"></div>
     </div>
     <div class="center_">
         <div style="text-align: center">
@@ -46,7 +47,7 @@ Vlan traceroute
             </div>
         </div>
     </div>
-    <div style="height: 100%" id="includedContent"></div>
+    <div style="height: 0%" id="includedContent"></div>
     <div id="main-div" style="padding-bottom: 10px;">
 
         <div id="content-point" style="text-align: center; margin: 20px"></div>
@@ -54,12 +55,13 @@ Vlan traceroute
 
 {% endblock %}
 {% block footer %}
-    <p style="color: white">Если нашли несоответствие, то пишите на
+    <label style="color: white; padding: 10px; border-radius: 5px; background-color: #222222">Если нашли несоответствие, то пишите на
         <a style="color: #4ac1f7" href="mailto:irudenko@sevtelecom.ru">irudenko@sevtelecom.ru</a>
-    </p>
+    </label>
 {% endblock %}
 {% block javascript %}
 <script src="/static/jquery.min.js"></script>
+<script src="/static/progressbar.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.css" type="text/css" />
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis-network.min.js"> </script>
 <script>
@@ -104,6 +106,7 @@ function show_map() {
           }
       );
     });
+    document.getElementById('includedContent').style.height = "111%"
 }
 
 $("#vlan").keyup(function(event) {
@@ -111,6 +114,19 @@ $("#vlan").keyup(function(event) {
         show_map();
     }
 });
+
+// Assuming we have an empty <div id="container"></div> in
+// HTML
+var bar = new ProgressBar.Line('#container',
+    {
+        easing: 'easeInOut',
+        {#color: 'blue',#}
+        trailColor: "#900000",
+        duration: 2000,
+        strokeWidth: 2.1,
+    }
+);
+bar.animate({{ percent }});  // Value from 0.0 to 1.0
 
 </script>
 

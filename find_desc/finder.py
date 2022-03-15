@@ -11,7 +11,7 @@ def get_stat(st: str):
     cfg = ConfigParser()
     cfg.read(f'{sys.path[0]}/config')
     data_dir = cfg.get('data', 'path')
-    devs_count = None
+    devs_count = 0
     intf_count = 0
     try:
         all_devices = os.listdir(data_dir)  # Все папки

@@ -25,5 +25,7 @@ urlpatterns = [
     path('vlan_map', views.get_vlan),
 
     # AJAX
-    path('ajax/', include('ajax.urls'))
+    path('ajax/', include('ajax.urls')),
+
+    path('api/', include('api.urls')),
 ]

@@ -68,8 +68,9 @@ def vlan_traceroute(request):
         'vlan_traceroute.html',
         {
             "devs_count": devs_count,
-            'intf_count': intf_count or 'None',
-            'zabbix_url': zabbix_url
+            'intf_count': intf_count,
+            'zabbix_url': zabbix_url,
+            'percent': str(round(intf_count/devs_count, 3))
         }
     )
 
