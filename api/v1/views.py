@@ -1,7 +1,12 @@
+import datetime
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
+from find_desc.models import DevicesInfo
 
 from configparser import ConfigParser
+import json
 import yaml
 import sys
 import os
@@ -13,22 +18,13 @@ def auth_check(requests):
     """
     # Проверяем, передан ли в заголовку ключ API
     if not requests.META.get('HTTP_API_KEY'):
-        return {'error': 'Not Authorized'}, 401  # Не авторизирован
+        return {'error': 'Unauthorized'}, 401  # Не авторизирован
     cfg = ConfigParser()
     cfg.read(f'{sys.path[0]}/config')
     api_key = cfg.get('api', 'key')
     if api_key != requests.META['HTTP_API_KEY']:
         return {'error': 'Invalid API key'}, 400
     return None, 200
-
-
-def get_dat_gir():
-    """
-    Возвращает полный путь до папки с данными
-    """
-    cfg = ConfigParser()
-    cfg.read(f'{sys.path[0]}/config')
-    return cfg.get('data', 'path')
 
 
 class GetStatInfo(APIView):
@@ -39,26 +35,16 @@ class GetStatInfo(APIView):
         status, code = auth_check(request)     # Проверка авторизации пользователя
         if status:
             return Response(status, status=code)
-        data_dir = get_dat_gir()    # Получаем папку с данными
-        devs_count, intf_count, vlans_count = 0, 0, 0
-        try:
-            all_devices = os.listdir(data_dir)  # Все папки
-            devs_count = len(all_devices)
-            for device in all_devices:
-                if os.path.exists(f'{data_dir}/{device}/interfaces.yaml'):
-                    intf_count += 1
-                if os.path.exists(f'{data_dir}/{device}/vlans.yaml'):
-                    vlans_count += 1
-        except Exception as e:
-            return Response({'error': e})
-        data = {
-            "all_devices": devs_count,
-            "stats": {
-                "devs_interfaces": intf_count,
-                "devs_vlans": vlans_count
+
+        return Response(
+            {
+                "all_devices": DevicesInfo.objects.count(),
+                "stats": {
+                    "devs_interfaces": DevicesInfo.objects.filter(interfaces__isnull=False).count(),
+                    "devs_vlans": DevicesInfo.objects.filter(vlans__isnull=False).count()
+                }
             }
-        }
-        return Response(data)
+        )
 
 
 class GetData(APIView):
@@ -72,36 +58,113 @@ class GetData(APIView):
 
         if not request.GET.get('dev'):  # В запросе должно быть указано имя устройства
             return Response({'error': 'No device name'}, status=400)  # Неверный запрос
-        device = request.GET['dev']
 
-        data_dir = get_dat_gir()  # Получаем папку с данными
-        if not os.path.exists(data_dir):
-            return Response({'error': "Can't find data"}, status=500)  # Не найдена папка с данными
-        if not os.path.exists(f"{data_dir}/{device}"):
-            return Response({'error': "Device not exist"}, status=400)  # Устройство не найдено
-        if not os.path.exists(f"{data_dir}/{device}/{type_}.yaml"):
-            return Response({'error': f"{type_.capitalize()} not exists"}, status=400)  # Интерфейсы/vlans не найдены
-        try:
-            with open(f"{data_dir}/{device}/{type_}.yaml") as file:  # Открываем файл с интерфейсами/vlans
-                data = yaml.safe_load(file)  # Переводим YAML в словарь
-                if type_ == 'vlans':  # Если был поиск VLAN то убираем лишние символы из перечня вланов
-                    for i in data['data']:
-                        i["VLAN's"] = i["VLAN's"].strip().replace('\n', '').replace('\r', '')
-                        i["VLAN's"] = i["VLAN's"].split(',')  # Создаем список из номеров VLAN
-        except PermissionError:
-            return Response({'error': "PermissionError"}, status=403)  # Нет разрешений на чтение файла
-        except Exception as e:
-            return Response({'error': e}, status=500)  # Другая ошибка
+        data = get_object_or_404(DevicesInfo, device_name=request.GET['dev'])
+
+        if type_ == 'vlans':
+            print(data.vlans)
+            res = json.loads(data.vlans)
+            for interface in res:
+                if isinstance(interface["VLAN's"], str):  # Если VLAN's представлены строкой, то превращаем в список
+                    interface["VLAN's"] = interface["VLAN's"].strip().replace('\n', '').replace('\r', '').split(',')
+        else:
+            res = json.loads(data.interfaces)
 
         if not request.GET.get('interface'):  # Если интерфейс/vlan не указан явно
-            return Response(data['data'])  # Отправляем все данные
+            return Response(res)
         try:
             intf_num = int(request.GET['interface'])
-            if intf_num > len(data['data']) or intf_num < 1:  # Если переданный номер интерфейса выходит за пределы
-                return Response({'error': "Interface number out of range"}, status=400)
+            if intf_num > len(res) or intf_num < 1:  # Если переданный номер интерфейса выходит за пределы
+                return Response(
+                    {'error': f"Interface number out of range for this device (max: {len(res)})"},
+                    status=400
+                )
+
         except ValueError:
-            return Response({'error': "Interface parameter must be integer"}, status=400)  # Неверно передан интерфейс
-        return Response(data['data'][intf_num - 1])
+            return Response(
+                {'error': "Interface parameter must be integer"},
+                status=400
+            )  # Неверно передан интерфейс
+
+        return Response(res[intf_num - 1])
+
+    def post(self, request, type_: str):
+        status, code = auth_check(request)     # Проверка авторизации пользователя
+        if status:
+            return Response(status, status=code)
+
+        device_name: str = request.POST.get('dev', '')
+        device = get_object_or_404(DevicesInfo, device_name=device_name)
+
+        try:
+            interfaces = json.loads(request.POST.get('interfaces', ''))  # Преобразуем в словарь
+            # Проверяем правильность принятых данных
+            for interface in interfaces:  # Проходимся по каждому интерфейсу
+
+                # Если элемент это словарь из 4х элементов (для vlans), длина статуса больше 1 и меньше 20
+                # Длина описания порта меньше 100
+                # Если в URL был указан тип vlans и они есть
+                if len(interface) == 4 and isinstance(interface, dict) and \
+                        len(interface["Interface"]) < 40 and \
+                        1 < len(interface["Status"]) < 30 and \
+                        len(interface['Description']) < 100 and \
+                        type_ == 'vlans':
+
+                    # Если VLAN's переданы в виде списка чисел или в виде списка строк, которые являются цифрами
+                    if isinstance(interface["VLAN's"], list) and all(
+                            [
+                                isinstance(v, int) or (isinstance(v, str) and v.isdigit())
+                                for v in interface["VLAN's"]
+                            ]
+                    ):
+
+                        # VLAN должен быть в пределах от 1 до 4096
+                        for vlan in map(int, interface["VLAN's"]):
+                            if vlan > 4096 or vlan < 1:
+                                interface['error'] = f'Vlan must be in range 1-4096 not {vlan}'
+                                print('Vlan must be in range 1-4096')
+                                return Response(interface, status=400)
+                        # Переводим каждый VLAN в строку
+                        interface["VLAN's"] = list(map(str, interface["VLAN's"]))
+
+                    else:
+                        interface['error'] = "Vlans must be numbers"
+                        print('Vlans must be numbers')
+                        return Response(interface, status=400)
+
+                # Если элемент это словарь из 3х элементов (для interfaces), Интерфейс
+                # длина статуса больше 1 и меньше 20
+                # Длина описания порта меньше 100
+                elif len(interface) == 3 and isinstance(interface, dict) and \
+                        len(interface["Interface"]) < 40 and \
+                        1 < len(interface["Status"]) < 20 and \
+                        len(interface['Description']) < 100 and \
+                        type_ == 'interfaces':
+                    pass
+                else:
+                    interface['error'] = 'Invalid format'
+                    return Response(interface, status=400)
+
+            # Сохраняем данные
+            if type_ == 'vlans':
+                update_fields = ['vlans', 'vlans_date']
+                device.vlans = json.dumps(interfaces)
+                device.vlans_date = datetime.datetime.now()
+            else:
+                update_fields = ['interfaces', 'interfaces_date']
+                device.interfaces = json.dumps(interfaces)
+                device.interfaces_date = datetime.datetime.now()
+
+            device.save(update_fields=update_fields)
+
+            return Response(interfaces)
+
+        except json.decoder.JSONDecodeError:
+            pass
+        except (KeyError, TypeError):
+            pass
+
+        return Response({'error': 'Invalid format'}, status=400)
 
 
 class GetVlan(APIView):

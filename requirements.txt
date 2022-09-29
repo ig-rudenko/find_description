@@ -3,3 +3,8 @@ PyYAML>=5.4.1
 dateconverter>=0.1
 pyvis>=0.1.9
 djangorestframework~=3.13.1
+textfsm~=1.1.2
+pexpect~=4.8.0
+requests~=2.27.1
+mysqlclient~=2.1.1
+pyzabbix

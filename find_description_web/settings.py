@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
+from configparser import ConfigParser
+import sys
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -75,6 +77,14 @@ WSGI_APPLICATION = 'find_description_web.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
+
+conf = ConfigParser()
+conf.read(f'{sys.path[0]}/config')
+db_host = conf.get('db', 'host')
+db_user = conf.get('db', 'user')
+db_pass = conf.get('db', 'password')
+db_database = conf.get('db', 'name')
+assert db_host and db_database and db_user and db_pass, 'Заполните данные [db] в файле конфигурации'
 
 DATABASES = {
     'default': {

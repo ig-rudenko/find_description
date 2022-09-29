@@ -3,83 +3,57 @@ import sys
 import yaml
 from re import findall, sub
 from configparser import ConfigParser
-from dateconverter import DateConverter
-from datetime import date, timedelta
+from .models import DevicesInfo
+import json
 
 
 def get_stat(st: str):
-    cfg = ConfigParser()
-    cfg.read(f'{sys.path[0]}/config')
-    data_dir = cfg.get('data', 'path')
     devs_count = 0
     intf_count = 0
     try:
-        all_devices = os.listdir(data_dir)  # Все папки
-        devs_count = len(all_devices)
-        for device in all_devices:
-            if os.path.exists(f'{data_dir}/{device}/{st}.yaml'):
-                intf_count += 1
+        devs_count = DevicesInfo.objects.count()
+        if st == 'interfaces':
+            intf_count = DevicesInfo.objects.filter(interfaces__isnull=False).count()
+        elif st == 'vlans':
+            intf_count = DevicesInfo.objects.filter(vlans__isnull=False).count()
     except Exception:
         pass
     return devs_count, intf_count
 
 
-def find_description(finding_string: str, re_string: str, stop_on: str):
-    print(re_string)
-    cfg = ConfigParser()
-    cfg.read(f'{sys.path[0]}/config')
-    data_dir = cfg.get('data', 'path')
+def find_description(finding_string: str, re_string: str):
 
     result = []
 
-    try:
-        all_devices = sorted(os.listdir(data_dir))  # Все папки
-        # Создаем упорядоченный список папок, которые необходимо сканировать
-        # начиная после последнего найденного устройства, если таковое было передано
-        device_to_scan = all_devices[all_devices.index(stop_on) + 1 if stop_on else 0:]
+    all_devices = DevicesInfo.objects.all()
 
-        # Производим поочередный поиск
-        for device in device_to_scan:
-            device = device.replace(' ', '\\ ').replace('|', '\|')
-            if os.path.exists(f'{data_dir}/{device}/interfaces.yaml'):
-                with open(f'{data_dir}/{device}/interfaces.yaml', 'r') as intf_yaml:
-                    interfaces = yaml.safe_load(intf_yaml)
-                for line in interfaces['data']:
+    # Производим поочередный поиск
+    for device in all_devices:
+        try:
+            interfaces = json.loads(device.interfaces)
+            if not interfaces:
+                continue
+            for line in interfaces:
+                if (finding_string and finding_string.lower() in line.get('Description').lower()) or \
+                        (re_string and findall(re_string, line.get('Description'))):
+                    # Если нашли совпадение в строке
 
-                    if (finding_string and finding_string.lower() in line['Description'].lower()) or \
-                            (re_string and len(findall(re_string, line['Description'])) != 0):
-                        # Если нашли совпадение в строке
-                        if interfaces.get('saved time') and \
-                                DateConverter(interfaces.get('saved time')).date == date.today():
-                            saved_date = f'Сегодня в {interfaces["saved time"].split(",")[1].strip()}'
+                    result.append({
+                        'Device': device.device_name or 'Dev' + ' ' + device.ip,
+                        'Interface': line['Interface'],
+                        'Description': line['Description'],
+                        'SavedTime': device.interfaces_date.strftime('%d.%m.%Y %H:%M:%S'),
+                        'percent': '100%'
+                    })
+            # if result:
+            #     return result  # Если на данном оборудовании были найдены совпадения, то
+            #     # возвращаем их и прерываем дальнейший поиск
 
-                        elif interfaces.get('saved time') and \
-                                DateConverter(interfaces.get('saved time')).date == date.today()-timedelta(days=1):
-                            saved_date = f'Вчера в {interfaces["saved time"].split(",")[1].strip()}'
+        except Exception as e:
+            print(e)
+            pass
 
-                        elif interfaces.get('saved time') and \
-                                DateConverter(interfaces.get('saved time')).date == date.today()-timedelta(days=2):
-                            saved_date = f'Позавчера в {interfaces["saved time"].split(",")[1].strip()}'
-
-                        elif interfaces.get('saved time'):
-                            saved_date = f'{DateConverter(interfaces["saved time"])} ' + \
-                                         interfaces["saved time"].split(",")[1].strip()
-                        else:
-                            saved_date = ''
-
-                        result.append({
-                                'Device': device,
-                                'Interface': line['Interface'],
-                                'Description': line['Description'],
-                                'SavedTime': saved_date,
-                                'percent': f'{str(all_devices.index(device) * 100 / len(all_devices))[:5]}%'
-                            })
-                if result:
-                    return result  # Если на данном оборудовании были найдены совпадения, то
-                            # возвращаем их и прерываем дальнейший поиск
-
-    except Exception:
-        pass
+    print(result)
     return result
 
 
@@ -112,7 +86,7 @@ def vlan_range(vlans_ranges: list) -> set:
         try:
             if '-' in v_range:
                 parts = v_range.split('-')
-                vlans += range(int(parts[0]), int(parts[1])+1)
+                vlans += range(int(parts[0]), int(parts[1]) + 1)
             else:
                 vlans.append(int(v_range))
         except ValueError:

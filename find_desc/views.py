@@ -1,16 +1,58 @@
 import os
 import yaml
+import requests as requests_lib
+from dc.arp_info import get_arp
 from django.shortcuts import render
 from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
 from find_desc.finder import find_description, get_stat, find_vlan
 from configparser import ConfigParser
+from pyzabbix import ZabbixAPI
 from pyvis.network import Network
 import sys
 from re import findall
 
 
-@login_required(login_url='accounts/login/')
+def arp_info(request, mac):
+    match = get_arp(mac)
+    names = []
+    if len(match) > 0:
+        # Если получили совпадение
+        ip = findall(r'\d+\.\d+\.\d+\.\d+', str(match))
+        print('ip', ip)
+        conf = ConfigParser()
+        conf.read(f'{sys.path[0]}/config')
+        zabbix = {
+            'host': conf.get('zabbix', 'host'),
+            'login': conf.get('zabbix', 'login'),
+            'password': conf.get('zabbix', 'password')
+        }
+        zbx = ZabbixAPI(server=zabbix['host'])
+        zbx.login(user=zabbix['login'], password=zabbix['password'])
+        # Ищем хост по IP
+        hosts = zbx.host.get(output=['name', 'status'], filter={'ip': ip}, selectInterfaces=['ip'])
+        names = [[h['name'], h['hostid']] for h in hosts if h['status'] == '0']
+
+    print({
+        'info': match,
+        'zabbix': names
+    })
+    return JsonResponse({
+        'info': match,
+        'zabbix': names
+    })
+
+
+def get_vendor(request, mac):
+    resp = requests_lib.get('https://macvendors.com/query/'+mac)
+    if resp.status_code == 200:
+        return JsonResponse({'vendor': resp.text})
+    return JsonResponse({'vendor': ''})
+
+
+def search_mac(request, mac=None):
+    return render(request, 'mac/search_mac.html', {'mac': mac})
+
+
 def home(request):
     cfg = ConfigParser()
     zabbix_url = ''
@@ -32,7 +74,6 @@ def home(request):
     )
 
 
-@login_required(login_url='accounts/login/')
 def find_as_str(request):
     print(request.GET.dict())
     if not request.GET.get('string'):
@@ -41,18 +82,16 @@ def find_as_str(request):
         })
     result = find_description(
         finding_string=request.GET.get('string') if request.GET.get('type') == 'string' else '',
-        re_string=request.GET.get('string') if request.GET.get('type') == 'regex' else '',
-        stop_on=request.GET.get('stop_on')
+        re_string=request.GET.get('string') if request.GET.get('type') == 'regex' else ''
     )
     print(len(result))
 
     return JsonResponse({
         'data': result,
-        'status': 'next' if result else 'end'
+        'status': 'end'
     })
 
 
-@login_required(login_url='accounts/login/')
 def vlan_traceroute(request):
     cfg = ConfigParser()
     zabbix_url = ''
@@ -78,7 +117,6 @@ def vlan_traceroute(request):
     )
 
 
-@login_required(login_url='accounts/login/')
 def get_vlan_desc(request):
     print(request.GET)
     try:
@@ -94,7 +132,6 @@ def get_vlan_desc(request):
     return JsonResponse({})
 
 
-@login_required(login_url='accounts/login/')
 def get_vlan(request):
     if not request.GET.get('vlan'):
         return JsonResponse({

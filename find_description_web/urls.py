@@ -28,4 +28,7 @@ urlpatterns = [
     path('ajax/', include('ajax.urls')),
 
     path('api/', include('api.urls')),
+
+    path('mac/', views.search_mac),
+    path('mac/<mac>', views.search_mac)
 ]

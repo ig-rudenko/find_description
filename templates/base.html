@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="{% static "css/circle_load.css" %}" />
     <link rel="stylesheet" href="{% static "css/menu.css" %}" />
     <link rel="stylesheet" href="{% static "css/input.css" %}" />
+    {% block style %}
+    {% endblock %}
     <title>
         {% block title %}
         Find Description
@@ -18,6 +20,7 @@
     <ul class="menu-main">
         <li><a href="/" >Find Description</a></li>
         <li><a href="/vlan" >Vlan traceroute</a></li>
+        <li><a href="/mac" >MAC decode</a></li>
         <li><a href="/accounts/logout">Logout</a></li>
     </ul>
     {% block body %}
@@ -25,7 +28,7 @@
             {% block header %}{% endblock %}
         </h1>
             {% block content %}{% endblock %}
-        <div style="padding-bottom: 20px; text-align: center">
+        <div class="footer" style="padding-bottom: 20px; text-align: center">
             {% block footer %}
                 Если нашли несоответствие, то пишите на <a href="mailto:irudenko@sevtelecom.ru">irudenko@sevtelecom.ru</a>
             {% endblock %}

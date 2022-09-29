@@ -92,44 +92,6 @@ function add_row(data, add_after, search_id){
 }
 
 
-function find_next (find_type, stop_on, add_after, find_str) {
-    $.ajax({
-        data: {
-            'string': find_str,
-            'type': find_type,
-            'stop_on': stop_on
-        },
-        type: 'get',
-        url: '/ajax/find',
-        success: function (response) {
-            console.log(response)
-            if (response.status === 'next' && SEARCH) {
-                add_row(
-                    response.data,
-                    add_after,
-                    hashCode(find_str)+hashCode(find_type)
-                )
-                document.getElementById('percent-'+hashCode(find_str)+hashCode(find_type)).innerHTML = response.data[0].percent
-                    + ' Найдено: ' + count_dict.get(hashCode(find_str)+hashCode(find_type))
-
-                find_next(
-                    find_type,
-                    response.data[0].Device,
-                    'd'+hashCode(response.data[0].Device)+'-last',
-                    find_str
-                )
-
-            } else {
-                if (response.status === 'end'){
-                    document.getElementById('percent-'+hashCode(find_str)+hashCode(find_type)).innerHTML = '100%'
-                        + ' Найдено: ' + count_dict.get(hashCode(find_str)+hashCode(find_type))
-                }
-                stop_search()
-            }
-        }
-    })
-}
-
 function start_find (find_type) {
     let find_str = document.getElementById('find_str').value
     if (!find_str){return}
@@ -154,12 +116,11 @@ function start_find (find_type) {
 
                 document.getElementById('data_table'+hashCode(find_str)+hashCode(find_type)).style.display = ''
 
-                find_next(
-                    find_type,
-                    response.data[0].Device,
-                    'd'+hashCode(response.data[0].Device)+'-last',
-                    find_str
-                )
+                document.getElementById('percent-'+hashCode(find_str)+hashCode(find_type)).innerHTML = response.data[0].percent
+                    + ' Найдено: ' + count_dict.get(hashCode(find_str)+hashCode(find_type))
+
+                stop_search()
+
             } else {
                 stop_search()
                 document.getElementById('content-point').innerHTML = 'Ничего не найдено'

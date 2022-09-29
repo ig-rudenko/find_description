@@ -2,35 +2,12 @@
 
 ---
 
-Данное приложение является веб модулем для 
+Данное приложение является модулем для 
 [Zabbix Devices Output](https://github.com/ig-rudenko/Zabbix-Devices-Output)
 
-## Find Description
-
-Позволяет найти строку, которая имеется в описании на порту узла сети
-по строгому поиску, а также используя регулярное выражение.
-
-После того как данные интерфейсов собраны с помощью [автоматического сбора ZDO](https://github.com/ig-rudenko/Zabbix-Devices-Output#автоматический-сбор-данных)
-Find Description обеспечит поиск по описанию портов, которые хранятся в файлах:
-
+После того как данные интерфейсов собраны с помощью [автоматического сбора ZDO](https://github.com/ig-rudenko/Zabbix-Devices-Output#%D0%B0%D0%B2%D1%82%D0%BE%D0%BC%D0%B0%D1%82%D0%B8%D1%87%D0%B5%D1%81%D0%BA%D0%B8%D0%B9-%D1%81%D0%B1%D0%BE%D1%80-%D0%B4%D0%B0%D0%BD%D0%BD%D1%8B%D1%85)
+данный модуль обеспечит поиск по описанию портов, которые хранятся в файлах 
 `/<zabbix-devices-output-path>/data/<device_name>/interfaces.yaml`
-
-![img.png](static/img/img1.png)
-
-
-## VLAN traceroute
-
-Отображает топологию конкретного VLAN в виде графа
-
-После того как данные vlan'ов собраны с помощью [автоматического сбора ZDO](https://github.com/ig-rudenko/Zabbix-Devices-Output#автоматический-сбор-данных)
-VLAN traceroute обеспечит поиск используя файлы:
-
-`/<zabbix-devices-output-path>/data/<device_name>/vlan.yaml`
-
-
-![img.png](static/img/img2.png)
-![img.png](static/img/img3.png)
-
 
 ## Установка
 
@@ -58,3 +35,8 @@ VLAN traceroute обеспечит поиск используя файлы:
 Подключаемся к серверу используя порт 8000
 
 По умолчанию логин/пароль суперпользователя: root/password
+
+![img.png](static/img/img.png)
+![img.png](static/img/img1.png)
+![img.png](static/img/img2.png)
+![img.png](static/img/img3.png)

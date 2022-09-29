@@ -6,4 +6,6 @@ urlpatterns = [
     path('find', views.find_as_str, name='find'),
     path('vlantraceroute', views.get_vlan, name='vlantraceroute'),
     path('vlan_desc', views.get_vlan_desc),
+    path('mac_vendor/<mac>', views.get_vendor),
+    path('mac_info/<mac>', views.arp_info),
 ]
