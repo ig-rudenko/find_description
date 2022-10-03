@@ -20,15 +20,15 @@ from find_desc import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
-    path('', views.home),
-    path('vlan', views.vlan_traceroute),
-    path('vlan_map', views.get_vlan),
+    path('', views.home, name='find-descr'),
+    path('vlan', views.vlan_traceroute, name='vlan-traceroute'),
+    path('vlan_map', views.get_vlan, name='get-vlan'),
 
     # AJAX
     path('ajax/', include('ajax.urls')),
 
     path('api/', include('api.urls')),
 
-    path('mac/', views.search_mac),
-    path('mac/<mac>', views.search_mac)
+    path('mac/', views.search_mac, name='search-mac'),
+    path('mac/<mac>', views.search_mac, name='search-mac-address')
 ]

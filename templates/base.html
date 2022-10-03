@@ -18,10 +18,10 @@
 </head>
 <body>
     <ul class="menu-main">
-        <li><a href="/" >Find Description</a></li>
-        <li><a href="/vlan" >Vlan traceroute</a></li>
-        <li><a href="/mac" >MAC decode</a></li>
-        <li><a href="/accounts/logout">Logout</a></li>
+        <li><a href="{% url 'find-descr' %}" >Find Description</a></li>
+        <li><a href="{% url 'vlan-traceroute' %}" >Vlan traceroute</a></li>
+        <li><a href="{% url 'search-mac' %}" >MAC decode</a></li>
+        <li><a href="{% url 'logout' %}">Logout</a></li>
     </ul>
     {% block body %}
         <h1 class="center_" style="text-align: center; margin-bottom: 10px;">
